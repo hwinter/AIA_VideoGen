@@ -7,7 +7,7 @@ from moviepy.editor import *
 from moviepy.video.tools.segmenting import findObjects
 from PIL import ImageFont, ImageDraw, Image
 from astropy.io import fits
-from sunpy.database import Database
+# from sunpy.database import Database
 from sys import stdout as stdout
 
 import aia_mkmovie as mm
@@ -15,7 +15,7 @@ import numpy as np
 import sunpy.instr.aia as aia
 import matplotlib.pyplot as plt
 
-import sunpy.map
+# import sunpy.map
 import cv2
 import subprocess
 import glob
@@ -67,22 +67,6 @@ def Clean_Frames():
 	for f in glob.glob("Frame_Out*.png"):
 	    os.remove(f)
 
-# def CLEAN_Database():
-# 	os.remove("sunpydata.sqlite")
-# 	os.remove("sunpydata.sqlite-journal")
-
-# def INIT_Database(DIRECTORY):
-
-# 	#create and initialize our sunpy database
-# 	database = Database('sqlite:///sunpydata.sqlite')
-# 	print("current database size: " + str(len(database)))
-# 	for f in sorted(glob.glob(DIRECTORY + "/*.fits")):
-# 		database.add_from_file(f, ignore_already_added = True)
-# 	# print("adding database: " + DIRECTORY)
-# 	#add an entire directory of fits files to our database, ignoring duplicates
-# 	# database.add_from_dir(DIRECTORY, ignore_already_added=True)
-# 	print("new database size: " + str(len(database)))
-# 	return(database)
 
 #Turns a directory full of AIA files in to a video with annotations based on HEADER data
 def AIA_Frame(DIR, FRAMESKIP):
