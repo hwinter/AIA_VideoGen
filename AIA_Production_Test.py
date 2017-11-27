@@ -21,8 +21,14 @@ import subprocess
 import glob
 import os
 import datetime
+import sys
 
-directory = "test_fits_files/set2/"
+if len(sys.argv) > 1:
+	directory = sys.argv[1]
+else:
+	directory = "test_fits_files/set1/"
+
+print("Dataset: " + str(directory))
 
 #Sorts AIA fits files in to new directories by spectrum
 def AIA_Sort(DIR):
