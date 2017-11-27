@@ -22,8 +22,6 @@ import glob
 import os
 import datetime
 
-print("Hello Mac Side")
-
 directory = "test_fits_files/set2/"
 
 #Sorts AIA fits files in to new directories by spectrum
