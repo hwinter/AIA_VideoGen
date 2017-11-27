@@ -23,10 +23,7 @@ import os
 import datetime
 
 
-directory = "test_fits_files/0171/"
-
-#>>> im = mm.aia_mkimage("/Users/miles/Documents/Sunpy/test_fits_files/0171/0171/AIA20170412_060011_0171.fits", w0 = 4096, h0 = 4096, time_stamp = False)
-#>>> mm.aia_mkimage.format_img(im)
+directory = "test_fits_files/set2/"
 
 #Sorts AIA fits files in to new directories by spectrum
 def AIA_Sort(DIR):
@@ -44,29 +41,49 @@ def AIA_Sort(DIR):
 
 def Video_List():
 	videolist = []
-	for f in glob.glob("*.mp4"):
+	for f in sorted(glob.glob("*.mp4")):
 		videolist.append(str(f))
+		# print(videolist)
 	return videolist
 
-def CLEAN_Database():
-	os.remove("sunpydata.sqlite")
-	os.remove("sunpydata.sqlite-journal")
+def Fits_Index(DIR):
+	fits_list = []
+	count = 0
+	for fits_file in sorted(glob.glob(DIR + "/*.fits")):
+		print("\r Adding file: " + str(fits_file) + " Entries: " + str(count), end = " ")
+		fits_list.append(str(fits_file))
+	print(fits_list) 
+	return(fits_list)
 
-def INIT_Database(DIRECTORY):
+def Clean_Frames():
+	for f in glob.glob("First_Out*.png"):
+	    os.remove(f)
 
-	#create and initialize our sunpy database
-	database = Database('sqlite:///sunpydata.sqlite')
-	print("current database size: " + str(len(database)))
-	for f in sorted(glob.glob(DIRECTORY + "/*.fits")):
-		database.add_from_file(f, ignore_already_added = True)
-	# print("adding database: " + DIRECTORY)
-	#add an entire directory of fits files to our database, ignoring duplicates
-	# database.add_from_dir(DIRECTORY, ignore_already_added=True)
-	print("new database size: " + str(len(database)))
-	return(database)
+	for f in glob.glob("Frame_Out*.png"):
+	    os.remove(f)
+
+# def CLEAN_Database():
+# 	os.remove("sunpydata.sqlite")
+# 	os.remove("sunpydata.sqlite-journal")
+
+# def INIT_Database(DIRECTORY):
+
+# 	#create and initialize our sunpy database
+# 	database = Database('sqlite:///sunpydata.sqlite')
+# 	print("current database size: " + str(len(database)))
+# 	for f in sorted(glob.glob(DIRECTORY + "/*.fits")):
+# 		database.add_from_file(f, ignore_already_added = True)
+# 	# print("adding database: " + DIRECTORY)
+# 	#add an entire directory of fits files to our database, ignoring duplicates
+# 	# database.add_from_dir(DIRECTORY, ignore_already_added=True)
+# 	print("new database size: " + str(len(database)))
+# 	return(database)
 
 #Turns a directory full of AIA files in to a video with annotations based on HEADER data
-def AIA_Frame(DATABASE, FRAMESKIP):
+def AIA_Frame(DIR, FRAMESKIP):
+
+	Clean_Frames()
+
 	timestart = datetime.datetime.now()
 	print("Start time: " + str(timestart))
 
@@ -74,54 +91,43 @@ def AIA_Frame(DATABASE, FRAMESKIP):
 	time = 0
 	wavelength = 0
 
-
-	database = DATABASE
+	database = Fits_Index(DIR)
 
 	#Load an opentype font (requires PIL)
 	font = ImageFont.truetype("BebasNeue Regular.otf", 80)
 	b,g,r,a = 191,191,191,0
 	framenum = 0
 	frameskip = FRAMESKIP #frames to skip for our timelapse 
+	
 
 	for i in xrange(0, len(database), frameskip):     
 		entry = database[i] 
-		# img = sunpy.map.Map(entry.path)
-		valbuff = 0
 
 		# img = aia.aiaprep(img)
-		print("working on " + str(entry.path))
-		for fits_header_entry in entry.fits_header_entries[:100]:
-			#Index through the header of each fits file looking for the DATE tag
-			keybuff = '{entry.key}'.format(entry = fits_header_entry)
-			# print(keybuff)
-			if keybuff == "DATE-OBS":
-				#If we find it, we store it, to overlay on the frame
-				valbuff = '{entry.value}'.format(entry = fits_header_entry)
-			if keybuff == "WAVELNTH":
-				wavelength = '{entry.value}'.format(entry = fits_header_entry)
+		print("working on " + str(entry))
+
+		if os.stat(entry).st_size != 0: #Check to see if our fits file is empty (this apparently happens sometimes)
+			hdulist = fits.open(entry)
+			priheader = hdulist[1].header
+			date_obs = priheader['DATE-OBS']
+			wavelength = priheader['WAVELNTH']
+		else:
+			date_obs = 0 
+			print("File is empty.")
 		
 		#database.add_from_dir() creates an entry for each header file. Sometimes AIA fits files have two headers,
 		#so if we get to an entry that doesn't have the information we need, we skip it.
-		if valbuff != 0:
+		
+		if date_obs != 0:
 			fontpath = "BebasNeue Regular.otf"     
 			font = ImageFont.truetype(fontpath, 56)
 
-			date = valbuff.split("T")[0]
-			time = valbuff.split("T")[1]
+			date = date_obs.split("T")[0]
+			time = date_obs.split("T")[1]
 
-			#This is how you get pyplot to export a clean image from your fits file at native resolution
-			#No one can tell me why it takes these exact steps in this order, but this is how we finally got it to work
-			# sizes = np.shape(img.data) 
-			# fig = plt.figure()
-			# fig.set_size_inches(1. * sizes[0] / sizes[1], 1, forward = False)
-			# ax = plt.Axes(fig, [0., 0., 1., 1.])
-			# ax.set_axis_off()
-			# fig.add_axes(ax)
-			# ax.imshow(img.data, norm = img.plot_settings['norm'], cmap = img.plot_settings['cmap'], origin='lower')
-			# plt.savefig("First_Out" + str(framenum + 1) + ".png", dpi = sizes[0]) 
-			# plt.close()
-			img = mm.aia_mkimage(entry.path, w0 = 4096, h0 = 4096, time_stamp = False)
+			img = mm.aia_mkimage(entry, w0 = 4096, h0 = 4096, time_stamp = False)
 			mm.aia_mkimage.format_img(img)
+			
 			for f in glob.glob("working/*.png"):
 				subprocess.call("mv " + f + " working/" + str(framenum) + ".png", shell = True)
 
@@ -133,7 +139,7 @@ def AIA_Frame(DATABASE, FRAMESKIP):
 			# #Render it to a frame
 			draw = ImageDraw.Draw(img_pil)
 			# #Put our text on it
-			print("applying timestamp... " + str(valbuff))
+			print("applying timestamp... " + str(date_obs))
 			draw.text((3468, 710), str(date), font = font, fill = (b, g, r, a))
 			draw.text((3468, 770), str(time), font = font, fill = (b, g, r, a))
 			# #Turn it back in to a numpy array for OpenCV to deal with
@@ -152,12 +158,7 @@ def AIA_Frame(DATABASE, FRAMESKIP):
 	subprocess.call('ffmpeg -r 24 -i Frame_Out%01d.png -vcodec libx264 -b:v 4M -pix_fmt yuv420p -y ' + str(OUTNAME), shell=True)
 	
 	#Cleaning up our directory when we're done
-	for f in glob.glob("First_Out*.png"):
-	    os.remove(f)
-
-	for f in glob.glob("Frame_Out*.png"):
-	    os.remove(f)
-
+	Clean_Frames()
 
 def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
 
@@ -181,7 +182,6 @@ def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for vide
 	cc = CompositeVideoClip(comp_clips,im.size)
 
 	cc.set_duration(DURATION).write_videofile(VIDEONAME, fps = 24)
-
 
 def OverlayComposite(BASE, OVERLAY, OUTNAME): #BASE: Output of VideoBaseGen(), Overlay: the graphical overlay image EG: NASM_Wall_Base2x2.mp4, OVERLAY_2x2.png
 	
@@ -246,10 +246,7 @@ AIA_Sort(directory)
 for f in glob.glob(str(directory) + "*"):
 	if os.path.isdir(f):
 		print("Opening directory: " + f)
-		newData = INIT_Database(f)
-		AIA_Frame(newData, 3)
-		CLEAN_Database()
-
+		AIA_Frame(f, 6)
 
 # Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, so synchronize temperature data.
 for n in range (0, 6):
@@ -264,8 +261,8 @@ for n in range (0, 6):
 
 	baseVideoIn = "NASM_BaseSegment_" + str(n) + "_.mp4"
 	segmentVideoOut = "NASM_SegmentOverlay_" + str(n) + "_.mp4"
-	overlayIn = "misc/OVERLAY_2x3_WHITE_" + str(n) + ".png" 
-	
+	overlayIn = "misc/OVERLAY_2x3_WHITEc.png" 
+	# overlayIn = "misc/OVERLAY_2x3_WHITE_" + str(n) + ".png"
 	OverlayComposite(baseVideoIn, overlayIn, segmentVideoOut)
 
 
