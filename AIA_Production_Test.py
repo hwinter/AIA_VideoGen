@@ -270,7 +270,7 @@ clip5 = VideoFileClip("NASM_SegmentOverlay_4_.mp4")
 clip6 = VideoFileClip("NASM_SegmentOverlay_5_.mp4")
 
 # final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
-final_clip = concatenate_videoclips([clip4,clip3.crossfadein(1),clip2.crossfadein(1),clip1.crossfadein(1)], padding = -1, method = "compose")
+final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
 final_clip.write_videofile("NASM_VideoWall_Concatenated.mp4")
 
 # Cleanup the directory when we're done
