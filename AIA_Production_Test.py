@@ -44,6 +44,9 @@ def AIA_Sort(DIR):
 	print("sorted: " + str(newdirs))
 	return(newdirs)
 
+def AIA_ArrangeByTemp():
+
+
 def Video_List():
 	videolist = []
 	for f in sorted(glob.glob("*.mp4")):
@@ -66,7 +69,6 @@ def Clean_Frames():
 
 	for f in glob.glob("Frame_Out*.png"):
 	    os.remove(f)
-
 
 #Turns a directory full of AIA files in to a video with annotations based on HEADER data
 def AIA_Frame(DIR, FRAMESKIP):
@@ -100,6 +102,8 @@ def AIA_Frame(DIR, FRAMESKIP):
 			priheader = hdulist[1].header
 			date_obs = priheader['DATE-OBS']
 			wavelength = priheader['WAVELNTH']
+			if wavelength == '94'
+				wavelength = '094'
 		else:
 			date_obs = 0 
 			print("File is empty.")
@@ -157,12 +161,12 @@ def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for vide
 
 	clips = [VideoFileClip(n) for n in
 		["misc/black.mp4",
-		vlist[0],
-		vlist[1],
+		vlist[0], #vlist is ordered by wavelengths.
+		vlist[5], #apparenty wavelengths do not correlate to temperature
+		vlist[3], #This is how we get our videos arranged on the thermo until I think of a better way
 		vlist[2],
-		vlist[3],
+		vlist[1],
 		vlist[4],
-		vlist[5],
 		FEATURE, #Second to last is our featured video
 		"misc/black.mp4"]]
 
