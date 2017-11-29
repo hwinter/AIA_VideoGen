@@ -44,7 +44,13 @@ def AIA_Sort(DIR):
 	print("sorted: " + str(newdirs))
 	return(newdirs)
 
-def AIA_ArrangeByTemp():
+def AIA_ArrangeByTemp(LIST):
+	list_in = LIST
+	list_order = [0, 5, 3 , 2, 1, 4]
+
+	list_out = [list_in[i] for i in list_order]
+
+	return(list_out)
 
 
 def Video_List():
@@ -158,15 +164,16 @@ def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for vide
 	im = ImageClip(TEMPLATE) 
 	regions = findObjects(im)
 	vlist = Video_List()
-
+	vlist = AIA_ArrangeByTemp(vlist) #Video_List() will sort by wavelength, but we want to sort by temperature
+	print("vlist: " + str(vlist))
 	clips = [VideoFileClip(n) for n in
 		["misc/black.mp4",
-		vlist[0], #vlist is ordered by wavelengths.
-		vlist[5], #apparenty wavelengths do not correlate to temperature
-		vlist[3], #This is how we get our videos arranged on the thermo until I think of a better way
-		vlist[2],
+		vlist[0],#The order they appear here is the order they appear on the Thermometer (?)
 		vlist[1],
-		vlist[4],
+        vlist[2],
+        vlist[3],
+        vlist[4],
+        vlist[5],
 		FEATURE, #Second to last is our featured video
 		"misc/black.mp4"]]
 
@@ -244,6 +251,7 @@ for f in glob.glob(str(directory) + "*"):
 # Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, so synchronize temperature data.
 for n in range (0, 6):
 	vlist = Video_List()
+	vlist = AIA_ArrangeByTemp(vlist)
 	feature = vlist[n]
 	templateIn = "misc/TEMPLATE_2x3.png"
 	videoOut = "NASM_BaseSegment_" + str(n) + "_.mp4"
