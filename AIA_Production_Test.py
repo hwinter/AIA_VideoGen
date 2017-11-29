@@ -262,12 +262,11 @@ for n in range (0, 6):
 
 	baseVideoIn = "NASM_BaseSegment_" + str(n) + "_.mp4"
 	segmentVideoOut = "NASM_SegmentOverlay_" + str(n) + "_.mp4"
-	overlayIn = "misc/OVERLAY_2x3_WHITEc.png" 
-	# overlayIn = "misc/OVERLAY_2x3_WHITE_" + str(n) + ".png"
+	# overlayIn = "misc/OVERLAY_2x3_WHITEc.png" 
+	overlayIn = "misc/OVERLAY_2x3_WHITE_" + str(n) + ".png"
 	OverlayComposite(baseVideoIn, overlayIn, segmentVideoOut)
 
 	subprocess.call('killall ffmpeg', shell = True) #This is a temporary fix for the leaky way that Moviepy calls ffmpeg
-
 
 # Take all the clips we've generated, and stitch them in to one long video.
 clip1 = VideoFileClip("NASM_SegmentOverlay_0_.mp4")
