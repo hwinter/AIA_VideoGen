@@ -25,7 +25,7 @@ import sys
 
 if len(sys.argv) == 3:
 	directory = sys.argv[1]
-	skipframes = sys.argv[2]
+	skipframes = int(sys.argv[2])
 else:
 	print("This script takes exactly two arguments. Proceeding with default values. ")
 	directory = "test_fits_files/set1/"
