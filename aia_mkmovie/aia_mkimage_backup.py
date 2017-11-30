@@ -25,9 +25,6 @@ from mpl_toolkits.axes_grid.inset_locator import inset_axes
 from astropy.table import vstack,Table,join
 from sunpy.instr.aia import aiaprep as ap
 
-from numba import jitclass
-
-# @jitclass
 class aia_mkimage:
 
     def __init__(self,dayarray,sday=False,eday=False,w0=1900,h0=1144,dpi=100.,sc=1.,
@@ -449,7 +446,6 @@ class aia_mkimage:
 
     #for j,i in enumerate(dayarray):
     #reformat file to be in 1900x1200 array and contain timetext
-
     def format_img(self):
         """
         Formats image and writes image to png file.

@@ -7,15 +7,14 @@ from moviepy.editor import *
 from moviepy.video.tools.segmenting import findObjects
 from PIL import ImageFont, ImageDraw, Image
 from astropy.io import fits
-# from sunpy.database import Database
 from sys import stdout as stdout
+from numba import jit
 
 import aia_mkmovie as mm
 import numpy as np
 import sunpy.instr.aia as aia
 import matplotlib.pyplot as plt
 
-# import sunpy.map
 import cv2
 import subprocess
 import glob
@@ -77,6 +76,7 @@ def Clean_Frames():
 	    os.remove(f)
 
 #Turns a directory full of AIA files in to a video with annotations based on HEADER data
+@jit
 def AIA_Frame(DIR, FRAMESKIP):
 
 	Clean_Frames()
@@ -159,6 +159,7 @@ def AIA_Frame(DIR, FRAMESKIP):
 	#Cleaning up our directory when we're done
 	Clean_Frames()
 
+# @jit
 def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
 
 	im = ImageClip(TEMPLATE) 
@@ -183,6 +184,7 @@ def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for vide
 
 	cc.set_duration(DURATION).write_videofile(VIDEONAME, fps = 24)
 
+@jit
 def OverlayComposite(BASE, OVERLAY, OUTNAME): #BASE: Output of VideoBaseGen(), Overlay: the graphical overlay image EG: NASM_Wall_Base2x2.mp4, OVERLAY_2x2.png
 	
 	cap = cv2.VideoCapture(BASE)
@@ -246,7 +248,7 @@ AIA_Sort(directory)
 for f in glob.glob(str(directory) + "*"):
 	if os.path.isdir(f):
 		print("Opening directory: " + f)
-		AIA_Frame(f, 6)
+		AIA_Frame(f, 1)
 
 # Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, so synchronize temperature data.
 for n in range (0, 6):
@@ -258,15 +260,16 @@ for n in range (0, 6):
 	
 	print("Video In: " + feature + ", using template: " + templateIn)
 	
-	VideoBaseGen(templateIn, feature, 5, videoOut)
+	VideoBaseGen(templateIn, feature, 1, videoOut)
 
 	baseVideoIn = "NASM_BaseSegment_" + str(n) + "_.mp4"
 	segmentVideoOut = "NASM_SegmentOverlay_" + str(n) + "_.mp4"
-	# overlayIn = "misc/OVERLAY_2x3_WHITEc.png" 
-	overlayIn = "misc/OVERLAY_2x3_WHITE_" + str(n) + ".png"
+	overlayIn = "misc/OVERLAY_2x3_WHITEc.png" 
+	# overlayIn = "misc/OVERLAY_2x3_WHITE_" + str(n) + ".png"
 	OverlayComposite(baseVideoIn, overlayIn, segmentVideoOut)
 
 	subprocess.call('killall ffmpeg', shell = True) #This is a temporary fix for the leaky way that Moviepy calls ffmpeg
+
 
 # Take all the clips we've generated, and stitch them in to one long video.
 clip1 = VideoFileClip("NASM_SegmentOverlay_0_.mp4")
