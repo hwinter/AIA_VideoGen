@@ -157,8 +157,9 @@ def AIA_Frame(DIR, FRAMESKIP):
 		print ("Skipping " + str(FRAMESKIP) + " frames...")
 
 	OUTNAME = str(date) + "_" + str(wavelength) + ".mp4"
-	subprocess.call("ffmpeg -r 24 -i Frame_Out%01d.png -an -pix_fmt 'yuv420p' -vcodec 'libx264' -level 41 -crf 0.0 -b:v 4M -r 12 -bufsize '28311k' -maxrate '28311k' -g '100' -coder 1 -qdiff 4 -qcomp 0.7 -flags +loop+mv4 -cmp +chroma -partitions +parti4x4+partp8x8+partb8x8 -subq 7 -me_range 16 -keyint_min 1 -sc_threshold 40 -i_qfactor 0.71 -rc_eq 'blurCplx^(1-qComp)' -b_strategy 1 -bidir_refine 1 -refs 6  -trellis 1 -x264opts keyint=10:min-keyint=1:bframes=1 -threads 2 -y " + str(OUTNAME), shell=True)
+	# subprocess.call("ffmpeg -r 24 -i Frame_Out%01d.png -an -pix_fmt 'yuv420p' -vcodec 'libx264' -level 41 -crf 0.0 -b:v 4M -r 12 -bufsize '28311k' -maxrate '28311k' -g '100' -coder 1 -qdiff 4 -qcomp 0.7 -flags +loop+mv4 -cmp +chroma -partitions +parti4x4+partp8x8+partb8x8 -subq 7 -me_range 16 -keyint_min 1 -sc_threshold 40 -i_qfactor 0.71 -rc_eq 'blurCplx^(1-qComp)' -b_strategy 1 -bidir_refine 1 -refs 6  -trellis 1 -x264opts keyint=10:min-keyint=1:bframes=1 -threads 2 -y " + str(OUTNAME), shell=True)
 	# subprocess.call('ffmpeg -r 24 -i Frame_Out%01d.png -vcodec libx264 -b:v 4M -pix_fmt yuv420p -y ' + str(OUTNAME), shell=True)
+	subprocess.call('ffmpeg -r 24 -i Frame_Out%01d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
 	
 	#Cleaning up our directory when we're done
 	Clean_Frames()
