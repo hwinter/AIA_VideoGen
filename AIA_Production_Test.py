@@ -263,7 +263,7 @@ for n in range (0, 6):
 	
 	print("Video In: " + feature + ", using template: " + templateIn)
 	
-	VideoBaseGen(templateIn, feature, 5, videoOut)
+	VideoBaseGen(templateIn, feature, 40, videoOut)
 
 	baseVideoIn = "NASM_BaseSegment_" + str(n) + "_.mp4"
 	segmentVideoOut = "NASM_SegmentOverlay_" + str(n) + "_.mp4"
