@@ -263,6 +263,7 @@ for f in glob.glob(str(directory) + "*"):
 		database = Fits_Index(f)
 		print("DATABASE")
 		print(database)
+		database = AIA_DecimateIndex(database, FRAMESKIP)
 
 		OUTNAME = Build_Outname(database[0]) #build a filename for our video from header data from a file in our database
 
@@ -274,7 +275,7 @@ for f in glob.glob(str(directory) + "*"):
 		pool.join()
 
 		print("OUTNAME: " + OUTNAME)
-		subprocess.call('ffmpeg -r 24 -i Frame_Out%01d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
+		subprocess.call('ffmpeg -r 24 -pattern_type glob -i "*.png" -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
 		Clean_Frames()
 
 
