@@ -263,7 +263,7 @@ for f in glob.glob(str(directory) + "*"):
 		print("DATABASE")
 		print(database)
 
-		OUTNAME = Build_Outname(database[1]) #build a filename for our video from header data from a file in our database
+		OUTNAME = Build_Outname(database[0]) #build a filename for our video from header data from a file in our database
 
 		pool = Pool()
 
