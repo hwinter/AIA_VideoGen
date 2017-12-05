@@ -81,6 +81,7 @@ def Fits_Index(DIR):
 	for fits_file in sorted(glob.glob(DIR + "/*.fits")):
 		print("\r Adding file: " + str(fits_file) + " Entries: " + str(count), end = " ")
 		fits_list.append(str(fits_file))
+		count = count + 1
 	print(fits_list) 
 	return(fits_list)
 
@@ -150,27 +151,27 @@ def AIA_MakeFrames(FILE):
 		subprocess.call("mv " + outfi + " working/" + str(framenum) + ".png", shell = True)
 
 		# 	#Convert our image from a numpy array to something PIL can deal with
-		img_pil = Image.open("working/" + str(framenum) + ".png")
-		# 	# Convert to RGB mode. Do I want to do this? I should maybe try RGBA
-		if img_pil.mode != "RGB":
-			img_pil = img_pil.convert("RGB")
-		#	# Render it to a frame
-		draw = ImageDraw.Draw(img_pil)
-		# 	# #Put our text on it
-		print("applying timestamp... " + str(date_obs))
-		draw.text((3468, 710), str(date), font = font, fill = (b, g, r, a))
-		draw.text((3468, 770), str(time), font = font, fill = (b, g, r, a))
-		# 	# #Turn it back in to a numpy array for OpenCV to deal with
-		frameStamp = np.array(img_pil)
+		if glob.glob("working/" + str(framenum) + ".png"):
+			img_pil = Image.open("working/" + str(framenum) + ".png")
+			# 	# Convert to RGB mode. Do I want to do this? I should maybe try RGBA
+			if img_pil.mode != "RGB":
+				img_pil = img_pil.convert("RGB")
+			#	# Render it to a frame
+			draw = ImageDraw.Draw(img_pil)
+			# 	# #Put our text on it
+			print("applying timestamp... " + str(date_obs))
+			draw.text((3468, 710), str(date), font = font, fill = (b, g, r, a))
+			draw.text((3468, 770), str(time), font = font, fill = (b, g, r, a))
+			# 	# #Turn it back in to a numpy array for OpenCV to deal with
+			frameStamp = np.array(img_pil)
 
-		print("printing frame: " + str(framenum + 1))
-		cv2.imwrite("Frame_Out" + str(framenum + 1) + ".png", cv2.cvtColor(frameStamp, cv2.COLOR_RGB2BGR))
-		# framenum = framenum + 1	
+			print("printing frame: " + str(framenum + 1))
+			cv2.imwrite("Frame_Out" + str(framenum + 1) + ".png", cv2.cvtColor(frameStamp, cv2.COLOR_RGB2BGR))
+		else:
+			print("Could not locate working/" + str(framenum) + ".png. Dropping frame")
 	else:
 		print("Entry header contains no date. Skipping...")
-	AIA_MakeFrames.hi = str(date) + "_" + str(wavelength) + ".mp4"
-
-
+	
 def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
 
 	im = ImageClip(TEMPLATE) 

@@ -31,6 +31,7 @@ def Fits_Index(DIR):
 	for fits_file in sorted(glob.glob(DIR + "/*.fits")):
 		print("\r Adding file: " + str(fits_file) + " Entries: " + str(count), end = " ")
 		fits_list.append(str(fits_file))
+		count = count + 1
 	print(fits_list) 
 	return(fits_list)
 
@@ -42,16 +43,11 @@ def AIA_DecimateIndex(LIST, SKIP):
 	return(list_out)
 
 i1 = Fits_Index(directory)
-i2 = AIA_DecimateIndex(i1, 2)
 
-print(i2)
-
-directory_list = []
 
 for f in glob.glob(str(directory) + "*"):
 	if os.path.isdir(f):
-		directory_list.append(f)
-	print(directory_list)
+		print("Opening directory: " + str(f))
+		database = Fits_Index(f)
+	
 
-
-print("Directory List: " + str(directory_list))
