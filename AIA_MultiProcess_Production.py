@@ -29,8 +29,6 @@ font = ImageFont.truetype(fontpath, 56)
 FRAMESKIP = 6
 database = []
 
-OUTNAME = ""
-
 if len(sys.argv) == 3:
 	directory = sys.argv[1]
 	skipframes = int(sys.argv[2])
@@ -92,9 +90,28 @@ def Clean_Frames():
 
 	for f in glob.glob("Frame_Out*.png"):
 	    os.remove(f)
+
+def Build_Outname(FILE):
+	entry = FILE 
+
+	if os.stat(entry).st_size != 0: #Check to see if our fits file is empty (this apparently happens sometimes)
+		hdulist = fits.open(entry)
+		priheader = hdulist[1].header
+		date_obs = priheader['DATE-OBS']
+		wavelength = priheader['WAVELNTH']
+		if wavelength == '94':
+			wavelength = '094'
+	
+	date = date_obs.split("T")[0]
+	OUTNAME = str(date) + "_" + str(wavelength) + ".mp4"
+
+	return OUTNAME
+	
+
 #Turns a directory full of AIA files in to a video with annotations based on HEADER data
 def AIA_MakeFrames(FILE):
 	print("FILE: " + str(FILE))
+
 	date = 0
 	time = 0
 	wavelength = 0
@@ -148,11 +165,11 @@ def AIA_MakeFrames(FILE):
 
 		print("printing frame: " + str(framenum + 1))
 		cv2.imwrite("Frame_Out" + str(framenum + 1) + ".png", cv2.cvtColor(frameStamp, cv2.COLOR_RGB2BGR))
-		# framenum = framenum + 1
-		OUTNAME = str(date) + "_" + str(wavelength) + ".mp4"
-			
+		# framenum = framenum + 1	
 	else:
 		print("Entry header contains no date. Skipping...")
+	AIA_MakeFrames.hi = str(date) + "_" + str(wavelength) + ".mp4"
+
 
 def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
 
@@ -246,6 +263,8 @@ for f in glob.glob(str(directory) + "*"):
 		print("DATABASE")
 		print(database)
 
+		OUTNAME = Build_Outname(database[1]) #build a filename for our video from header data from a file in our database
+
 		pool = Pool()
 
 		# print("MAPPING: " + str(f))
@@ -253,6 +272,7 @@ for f in glob.glob(str(directory) + "*"):
 		pool.close()
 		pool.join()
 
+		print("OUTNAME: " + OUTNAME)
 		subprocess.call('ffmpeg -r 24 -i Frame_Out%01d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
 		Clean_Frames()
 
