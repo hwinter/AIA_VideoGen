@@ -25,7 +25,7 @@ from mpl_toolkits.axes_grid.inset_locator import inset_axes
 from astropy.table import vstack,Table,join
 from sunpy.instr.aia import aiaprep as ap
 
-from numba import jitclass
+from numba import jit
 
 # @jitclass
 class aia_mkimage:
@@ -704,7 +704,7 @@ class aia_mkimage:
             fig.savefig(outfi,edgecolor='black',facecolor='black',dpi=self.dpi)
             plt.clf()
             plt.close()
-        return
+        return outfi
     
     
     #for j,i in enumerate(dayarray):
