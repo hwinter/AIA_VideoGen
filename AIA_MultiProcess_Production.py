@@ -64,8 +64,9 @@ def AIA_ArrangeByTemp(LIST):
 def AIA_ArrangeFrames(DIR):  ##SORT FRAME_OUT, NOT THE WORKING DIRECTORY
 	frame_number = 0
 	for f in sorted(glob.glob(str(DIR) + "Frame_Out*.png")):
-		subprocess.call("mv " + f + " working/" + "Frame_Out" + str(frame_number) + ".png", shell = True)
+		subprocess.call("mv " + f + " working/" + "Frame_Out" + str(frame_number).zfill(4) + ".png", shell = True)
 		print("SORTING: " + str(f))
+		frame_number = frame_number + 1
 
 
 
@@ -281,6 +282,8 @@ for f in glob.glob(str(directory) + "*"):
 		pool.map(AIA_MakeFrames, database)
 		pool.close()
 		pool.join()
+
+		AIA_ArrangeFrames("working/")
 
 		print("OUTNAME: " + OUTNAME)
 		subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
