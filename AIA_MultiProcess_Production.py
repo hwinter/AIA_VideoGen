@@ -61,6 +61,14 @@ def AIA_ArrangeByTemp(LIST):
 
 	return(list_out)
 
+def AIA_ArrangeFrames(DIR):  ##SORT FRAME_OUT, NOT THE WORKING DIRECTORY
+	frame_number = 0
+	for f in sorted(glob.glob(str(DIR) + "Frame_Out*.png")):
+		subprocess.call("mv " + f + " working/" + "Frame_Out" + str(frame_number) + ".png", shell = True)
+		print("SORTING: " + str(f))
+
+
+
 def AIA_DecimateIndex(LIST, SKIP):
 	list_in = LIST
 	print("DECIMATING")
@@ -99,7 +107,7 @@ def Build_Outname(FILE):
 		hdulist = fits.open(entry)
 		priheader = hdulist[1].header
 		date_obs = priheader['DATE-OBS']
-		wavelength = priheader['WAVELNTH']
+		wavelength = str(priheader['WAVELNTH']).zfill(4)
 		if wavelength == '94':
 			wavelength = '094'
 	
@@ -119,6 +127,7 @@ def AIA_MakeFrames(FILE):
 
 	b,g,r,a = 191,191,191,0
 	framenum = database.index(FILE)
+	framenum = str(framenum).zfill(4)
 
 	print("FRAMENUM: " + str(framenum))
 	entry = FILE 
@@ -132,8 +141,7 @@ def AIA_MakeFrames(FILE):
 		priheader = hdulist[1].header
 		date_obs = priheader['DATE-OBS']
 		wavelength = priheader['WAVELNTH']
-		if wavelength == '94':
-			wavelength = '094'
+
 	else:
 		date_obs = 0 
 		print("File is empty.")
@@ -165,8 +173,8 @@ def AIA_MakeFrames(FILE):
 			# 	# #Turn it back in to a numpy array for OpenCV to deal with
 			frameStamp = np.array(img_pil)
 
-			print("printing frame: " + str(framenum + 1))
-			cv2.imwrite("Frame_Out" + str(framenum + 1) + ".png", cv2.cvtColor(frameStamp, cv2.COLOR_RGB2BGR))
+			print("printing frame: " + str(framenum))
+			cv2.imwrite("working/Frame_Out" + str(framenum) + ".png", cv2.cvtColor(frameStamp, cv2.COLOR_RGB2BGR))
 		else:
 			print("Could not locate working/" + str(framenum) + ".png. Dropping frame")
 	else:
@@ -275,8 +283,8 @@ for f in glob.glob(str(directory) + "*"):
 		pool.join()
 
 		print("OUTNAME: " + OUTNAME)
-		subprocess.call('ffmpeg -r 24 -pattern_type glob -i "*.png" -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-		Clean_Frames()
+		subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
+		# Clean_Frames()
 
 
 # Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, so synchronize temperature data.
