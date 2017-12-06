@@ -287,7 +287,7 @@ for f in glob.glob(str(directory) + "*"):
 
 		print("OUTNAME: " + OUTNAME)
 		subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-		Clean_Frames()
+		# Clean_Frames()
 
 
 # Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, so synchronize temperature data.
@@ -300,7 +300,7 @@ for n in range (0, 6):
 	
 	print("Video In: " + feature + ", using template: " + templateIn)
 	
-	VideoBaseGen(templateIn, feature, 30, videoOut)
+	VideoBaseGen(templateIn, feature, 2, videoOut)
 
 	baseVideoIn = "NASM_BaseSegment_" + str(n) + "_.mp4"
 	segmentVideoOut = "NASM_SegmentOverlay_" + str(n) + "_.mp4"
