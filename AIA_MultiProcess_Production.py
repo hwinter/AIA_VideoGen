@@ -23,10 +23,10 @@ import os
 import datetime
 import sys
 
-fontpath = "BebasNeue Regular.otf"     
-font = ImageFont.truetype(fontpath, 56)
+fontpath = "BebasNeue Regular.otf"
+font = ImageFont.truetype(fontpath, 76)
 
-FRAMESKIP = 6
+FRAMESKIP = 24
 database = []
 
 if len(sys.argv) == 3:
@@ -35,7 +35,7 @@ if len(sys.argv) == 3:
 else:
 	print("This script takes exactly two arguments. Proceeding with default values. ")
 	directory = "test_fits_files/set1/"
-	skipframes = 6
+	skipframes = 24
 
 print("Dataset: " + str(directory))
 
@@ -53,6 +53,7 @@ def AIA_Sort(DIR):
 	print("sorted: " + str(newdirs))
 	return(newdirs)
 
+#This is a hack to sort the output of Video_List() by temperature, rather than spectrum
 def AIA_ArrangeByTemp(LIST):
 	list_in = LIST
 	list_order = [0, 5, 3 , 2, 1, 4]
@@ -61,15 +62,15 @@ def AIA_ArrangeByTemp(LIST):
 
 	return(list_out)
 
-def AIA_ArrangeFrames(DIR):  ##SORT FRAME_OUT, NOT THE WORKING DIRECTORY
+#This smooths out frame numbering in the event that individual frames failed to render properly
+def AIA_ArrangeFrames(DIR):  
 	frame_number = 0
 	for f in sorted(glob.glob(str(DIR) + "Frame_Out*.png")):
 		subprocess.call("mv " + f + " working/" + "Frame_Out" + str(frame_number).zfill(4) + ".png", shell = True)
 		print("SORTING: " + str(f))
 		frame_number = frame_number + 1
 
-
-
+#This let's us pick and choose which frames to render from our index. Feed it in a list, and this will spit out a list of every <SKIP> index.
 def AIA_DecimateIndex(LIST, SKIP):
 	list_in = LIST
 	print("DECIMATING")
@@ -77,13 +78,15 @@ def AIA_DecimateIndex(LIST, SKIP):
 
 	return(list_out)
 
+#Creates a list of all videos in the directory, sorted alphanumerically
 def Video_List():
 	videolist = []
 	for f in sorted(glob.glob("*.mp4")):
 		videolist.append(str(f))
-		# print(videolist)
+
 	return videolist
 
+#This builds and returns a database of fits files in a given directory.
 def Fits_Index(DIR):
 	fits_list = []
 	count = 0
@@ -94,13 +97,15 @@ def Fits_Index(DIR):
 	print(fits_list) 
 	return(fits_list)
 
+#This purges the working directory of .png files
 def Clean_Frames():
 	for f in glob.glob("working/*.png"):
 	    os.remove(f)
 
-	for f in glob.glob("Frame_Out*.png"):
+	for f in glob.glob("working/Frame_Out*.png"):
 	    os.remove(f)
 
+#Build output file names based on .fits header data
 def Build_Outname(FILE):
 	entry = FILE 
 
@@ -116,7 +121,6 @@ def Build_Outname(FILE):
 	OUTNAME = str(date) + "_" + str(wavelength) + ".mp4"
 
 	return OUTNAME
-	
 
 #Turns a directory full of AIA files in to a video with annotations based on HEADER data
 def AIA_MakeFrames(FILE):
@@ -169,8 +173,8 @@ def AIA_MakeFrames(FILE):
 			draw = ImageDraw.Draw(img_pil)
 			# 	# #Put our text on it
 			print("applying timestamp... " + str(date_obs))
-			draw.text((3468, 710), str(date), font = font, fill = (b, g, r, a))
-			draw.text((3468, 770), str(time), font = font, fill = (b, g, r, a))
+			draw.text((3468, 386), str(date), font = font, fill = (b, g, r, a))
+			draw.text((3468, 456), str(time), font = font, fill = (b, g, r, a))
 			# 	# #Turn it back in to a numpy array for OpenCV to deal with
 			frameStamp = np.array(img_pil)
 
@@ -181,6 +185,7 @@ def AIA_MakeFrames(FILE):
 	else:
 		print("Entry header contains no date. Skipping...")
 	
+#	
 def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
 
 	im = ImageClip(TEMPLATE) 
@@ -278,12 +283,12 @@ for f in glob.glob(str(directory) + "*"):
 
 		pool = Pool()
 
-		# print("MAPPING: " + str(f))
+		# Using multiprocess.pool() to parallelize our frame rendering
 		pool.map(AIA_MakeFrames, database)
 		pool.close()
 		pool.join()
 
-		AIA_ArrangeFrames("working/")
+		AIA_ArrangeFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
 
 		print("OUTNAME: " + OUTNAME)
 		subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
