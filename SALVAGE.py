@@ -185,7 +185,7 @@ def AIA_MakeFrames(FILE):
 	else:
 		print("Entry header contains no date. Skipping...")
 	
-#	
+#Creates multiple picture in picture video according to a template	
 def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
 
 	im = ImageClip(TEMPLATE) 
@@ -208,8 +208,9 @@ def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for vide
 
 	cc = CompositeVideoClip(comp_clips,im.size)
 
-	cc.set_duration(DURATION).write_videofile(VIDEONAME, fps = 24)
+	cc.set_duration(DURATION).write_videofile("working/" + str(VIDEONAME), fps = 24)
 
+#Overlays our infographic frame by frame
 def OverlayComposite(BASE, OVERLAY, OUTNAME): #BASE: Output of VideoBaseGen(), Overlay: the graphical overlay image EG: NASM_Wall_Base2x2.mp4, OVERLAY_2x2.png
 	
 	cap = cv2.VideoCapture(BASE)
@@ -268,31 +269,31 @@ def OverlayComposite(BASE, OVERLAY, OUTNAME): #BASE: Output of VideoBaseGen(), O
 	cap.release()
 
 
-AIA_Sort(directory)
+# AIA_Sort(directory)
 
-for f in glob.glob(str(directory) + "*"):
-	if os.path.isdir(f):
-		print("Opening directory: " + f)
+# for f in glob.glob(str(directory) + "*"):
+# 	if os.path.isdir(f):
+# 		print("Opening directory: " + f)
 		
-		database = Fits_Index(f)
-		print("DATABASE")
-		print(database)
-		database = AIA_DecimateIndex(database, FRAMESKIP)
+# 		database = Fits_Index(f)
+# 		print("DATABASE")
+# 		print(database)
+# 		database = AIA_DecimateIndex(database, FRAMESKIP)
 
-		OUTNAME = Build_Outname(database[0]) #build a filename for our video from header data from a file in our database
+# 		OUTNAME = Build_Outname(database[0]) #build a filename for our video from header data from a file in our database
 
-		pool = Pool()
+# 		pool = Pool()
 
-		# Using multiprocess.pool() to parallelize our frame rendering
-		pool.map(AIA_MakeFrames, database)
-		pool.close()
-		pool.join()
+# 		# Using multiprocess.pool() to parallelize our frame rendering
+# 		pool.map(AIA_MakeFrames, database)
+# 		pool.close()
+# 		pool.join()
 
-		AIA_ArrangeFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
+# 		AIA_ArrangeFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
 
-		print("OUTNAME: " + OUTNAME)
-		subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-		Clean_Frames()
+# 		print("OUTNAME: " + OUTNAME)
+# 		subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
+# 		Clean_Frames()
 
 
 # Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, so synchronize temperature data.
@@ -301,14 +302,14 @@ for n in range (0, 6):
 	vlist = AIA_ArrangeByTemp(vlist)
 	feature = vlist[n]
 	templateIn = "misc/TEMPLATE_2x3.png"
-	videoOut = "NASM_BaseSegment_" + str(n) + "_.mp4"
+	videoOut = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
 	
 	print("Video In: " + feature + ", using template: " + templateIn)
 	
 	VideoBaseGen(templateIn, feature, 30, videoOut)
 
-	baseVideoIn = "NASM_BaseSegment_" + str(n) + "_.mp4"
-	segmentVideoOut = "NASM_SegmentOverlay_" + str(n) + "_.mp4"
+	baseVideoIn = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
+	segmentVideoOut = "working/NASM_SegmentOverlay_" + str(n) + "_.mp4"
 	# overlayIn = "misc/OVERLAY_2x3_WHITEc.png" 
 	overlayIn = "misc/OVERLAY_2x3_WHITE_" + str(n) + ".png"
 	OverlayComposite(baseVideoIn, overlayIn, segmentVideoOut)
@@ -316,21 +317,21 @@ for n in range (0, 6):
 	subprocess.call('killall ffmpeg', shell = True) #This is a temporary fix for the leaky way that Moviepy calls ffmpeg
 
 # Take all the clips we've generated, and stitch them in to one long video.
-clip1 = VideoFileClip("NASM_SegmentOverlay_0_.mp4")
-clip2 = VideoFileClip("NASM_SegmentOverlay_1_.mp4")
-clip3 = VideoFileClip("NASM_SegmentOverlay_2_.mp4")
-clip4 = VideoFileClip("NASM_SegmentOverlay_3_.mp4")
-clip5 = VideoFileClip("NASM_SegmentOverlay_4_.mp4")
-clip6 = VideoFileClip("NASM_SegmentOverlay_5_.mp4")
+clip1 = VideoFileClip("working/NASM_SegmentOverlay_0_.mp4")
+clip2 = VideoFileClip("working/NASM_SegmentOverlay_1_.mp4")
+clip3 = VideoFileClip("working/NASM_SegmentOverlay_2_.mp4")
+clip4 = VideoFileClip("working/NASM_SegmentOverlay_3_.mp4")
+clip5 = VideoFileClip("working/NASM_SegmentOverlay_4_.mp4")
+clip6 = VideoFileClip("working/NASM_SegmentOverlay_5_.mp4")
 
 # final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
 final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
 final_clip.write_videofile("NASM_VideoWall_Concatenated.mp4")
 
-# Cleanup the directory when we're done
-for f in glob.glob("NASM_BaseSegment_*.mp4"):
-	    os.remove(f)
+# # Cleanup the directory when we're done
+# for f in glob.glob("NASM_BaseSegment_*.mp4"):
+# 	    os.remove(f)
 
-for f in glob.glob("NASM_SegmentOverlay_*.mp4"):
-	    os.remove(f)
+# for f in glob.glob("NASM_SegmentOverlay_*.mp4"):
+# 	    os.remove(f)
 
