@@ -208,7 +208,7 @@ def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for vide
 
 	cc = CompositeVideoClip(comp_clips,im.size)
 
-	cc.set_duration(DURATION).write_videofile("working/" + str(VIDEONAME), fps = 24)
+	cc.set_duration(DURATION).write_videofile(VIDEONAME, fps = 24)
 
 #Overlays our infographic frame by frame
 def OverlayComposite(BASE, OVERLAY, OUTNAME): #BASE: Output of VideoBaseGen(), Overlay: the graphical overlay image EG: NASM_Wall_Base2x2.mp4, OVERLAY_2x2.png
