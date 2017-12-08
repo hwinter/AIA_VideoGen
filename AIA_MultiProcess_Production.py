@@ -26,7 +26,6 @@ import sys
 fontpath = "BebasNeue Regular.otf"
 font = ImageFont.truetype(fontpath, 76)
 
-FRAMESKIP = 24
 database = []
 
 if len(sys.argv) == 3:
@@ -277,7 +276,7 @@ for f in glob.glob(str(directory) + "*"):
 		database = Fits_Index(f)
 		print("DATABASE")
 		print(database)
-		database = AIA_DecimateIndex(database, FRAMESKIP)
+		database = AIA_DecimateIndex(database, skipframes)
 
 		OUTNAME = Build_Outname(database[0]) #build a filename for our video from header data from a file in our database
 
