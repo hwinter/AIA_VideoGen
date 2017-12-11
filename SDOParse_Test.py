@@ -23,5 +23,7 @@ def Parse_Directory(WLEN):
 
 new_index = Parse_Directory(wavelength)
 
-hdulist = fits.open(new_index[1])
+print("IS IT A PATH? " + str(os.path.exists(new_index[1])))
+
+hdulist = fits.open(str(new_index[1]))
 
