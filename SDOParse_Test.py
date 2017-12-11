@@ -22,5 +22,4 @@ def Parse_Directory(WLEN):
 
 new_index = Parse_Directory(wavelength)
 
-for i in new_index:
-        print(new_index[i])
+print(new_index)
