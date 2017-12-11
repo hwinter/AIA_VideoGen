@@ -55,15 +55,15 @@ def Fits_Index(DIR):
 #Exactly the same as Fits_Index, but modified to work with the file structure of /data/SDO
 def Parse_Directory(WLEN):
 
-        fits_list = []
+		fits_list = []
 
-        for folder in sorted(glob.glob(str(directory) + "H*")):
+		for folder in sorted(glob.glob(str(directory) + "H*")):
 		print("FOLDER: " + str(folder))
-                for file in sorted(glob.glob(str(folder) + "/*" + str(WLEN).zfill(4) + ".fits")):
-                        print("ADDING: " + str(file))
-                        fits_list.append(str(file))
+			for file in sorted(glob.glob(str(folder) + "/*" + str(WLEN).zfill(4) + ".fits")):
+					print("ADDING: " + str(file))
+					fits_list.append(str(file))
 
-        return(fits_list)
+		return(fits_list)
 
 #Sorts AIA fits files in to new directories by spectrum
 def AIA_Sort(DIR):
