@@ -23,6 +23,8 @@ import os
 import datetime
 import sys
 
+timestart = datetime.datetime.now()
+
 fontpath = "BebasNeue Regular.otf"
 font = ImageFont.truetype(fontpath, 76)
 
@@ -300,14 +302,14 @@ for n in range (0, 6):
 	vlist = AIA_ArrangeByTemp(vlist)
 	feature = vlist[n]
 	templateIn = "misc/TEMPLATE_2x3.png"
-	videoOut = "NASM_BaseSegment_" + str(n) + "_.mp4"
+	videoOut = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
 	
 	print("Video In: " + feature + ", using template: " + templateIn)
 	
 	VideoBaseGen(templateIn, feature, 30, videoOut)
 
-	baseVideoIn = "NASM_BaseSegment_" + str(n) + "_.mp4"
-	segmentVideoOut = "NASM_SegmentOverlay_" + str(n) + "_.mp4"
+	baseVideoIn = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
+	segmentVideoOut = "working/NASM_SegmentOverlay_" + str(n) + "_.mp4"
 	# overlayIn = "misc/OVERLAY_2x3_WHITEc.png" 
 	overlayIn = "misc/OVERLAY_2x3_WHITE_" + str(n) + ".png"
 	OverlayComposite(baseVideoIn, overlayIn, segmentVideoOut)
@@ -315,12 +317,12 @@ for n in range (0, 6):
 	subprocess.call('killall ffmpeg', shell = True) #This is a temporary fix for the leaky way that Moviepy calls ffmpeg
 
 # Take all the clips we've generated, and stitch them in to one long video.
-clip1 = VideoFileClip("NASM_SegmentOverlay_0_.mp4")
-clip2 = VideoFileClip("NASM_SegmentOverlay_1_.mp4")
-clip3 = VideoFileClip("NASM_SegmentOverlay_2_.mp4")
-clip4 = VideoFileClip("NASM_SegmentOverlay_3_.mp4")
-clip5 = VideoFileClip("NASM_SegmentOverlay_4_.mp4")
-clip6 = VideoFileClip("NASM_SegmentOverlay_5_.mp4")
+clip1 = VideoFileClip("working/NASM_SegmentOverlay_0_.mp4")
+clip2 = VideoFileClip("working/NASM_SegmentOverlay_1_.mp4")
+clip3 = VideoFileClip("working/NASM_SegmentOverlay_2_.mp4")
+clip4 = VideoFileClip("working/NASM_SegmentOverlay_3_.mp4")
+clip5 = VideoFileClip("working/NASM_SegmentOverlay_4_.mp4")
+clip6 = VideoFileClip("working/NASM_SegmentOverlay_5_.mp4")
 
 # final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
 final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
@@ -332,4 +334,8 @@ for f in glob.glob("NASM_BaseSegment_*.mp4"):
 
 for f in glob.glob("NASM_SegmentOverlay_*.mp4"):
 	    os.remove(f)
+
+timeend = datetime.datetime.now()
+finaltime = timeend - timestart
+print("Final Runtime: " + str(finaltime))
 
