@@ -9,8 +9,7 @@ from PIL import ImageFont, ImageDraw, Image
 from astropy.io import fits
 from sys import stdout as stdout
 from numba import jit
-# from multiprocessing import Pool
-from pathos.multiprocessing import ProcessingPool as Pool
+from multiprocessing import Pool
 
 import aia_mkmovie as mm
 import numpy as np
@@ -23,23 +22,48 @@ import glob
 import os
 import datetime
 import sys
-# import multiprocessing
+
+timestart = datetime.datetime.now()
 
 fontpath = "BebasNeue Regular.otf"
 font = ImageFont.truetype(fontpath, 76)
 
-FRAMESKIP = 24
 database = []
+target_wavelengths = ["0094", "0171", "0193", "0211", "0304", "0335"]
 
 if len(sys.argv) == 3:
 	directory = sys.argv[1]
 	skipframes = int(sys.argv[2])
 else:
 	print("This script takes exactly two arguments. Proceeding with default values. ")
-	directory = "test_fits_files/set1/"
+	directory = "/data/SDO/AIA/level1/2017/06/08/"
 	skipframes = 24
 
 print("Dataset: " + str(directory))
+
+#This builds and returns a database of fits files in a given directory.
+def Fits_Index(DIR):
+	fits_list = []
+	count = 0
+	for fits_file in sorted(glob.glob(DIR + "/*.fits")):
+		print("\r Adding file: " + str(fits_file) + " Entries: " + str(count), end = " ")
+		fits_list.append(str(fits_file))
+		count = count + 1
+	print(fits_list) 
+	return(fits_list)
+
+#Exactly the same as Fits_Index, but modified to work with the file structure of /data/SDO
+def Parse_Directory(WLEN):
+
+        fits_list = []
+
+        for folder in sorted(glob.glob(str(directory) + "H*")):
+		print("FOLDER: " + str(folder))
+                for file in sorted(glob.glob(str(folder) + "/*" + str(WLEN).zfill(4) + ".fits")):
+                        print("ADDING: " + str(file))
+                        fits_list.append(str(file))
+
+        return(fits_list)
 
 #Sorts AIA fits files in to new directories by spectrum
 def AIA_Sort(DIR):
@@ -55,6 +79,14 @@ def AIA_Sort(DIR):
 	print("sorted: " + str(newdirs))
 	return(newdirs)
 
+#Creates a list of all videos in the directory, sorted alphanumerically
+def Video_List():
+	videolist = []
+	for f in sorted(glob.glob("*.mp4")):
+		videolist.append(str(f))
+
+	return videolist
+
 #This is a hack to sort the output of Video_List() by temperature, rather than spectrum
 def AIA_ArrangeByTemp(LIST):
 	list_in = LIST
@@ -65,7 +97,7 @@ def AIA_ArrangeByTemp(LIST):
 	return(list_out)
 
 #This smooths out frame numbering in the event that individual frames failed to render properly
-def AIA_ArrangeFrames(DIR):  
+def AIA_PruneDroppedFrames(DIR):  
 	frame_number = 0
 	for f in sorted(glob.glob(str(DIR) + "Frame_Out*.png")):
 		subprocess.call("mv " + f + " working/" + "Frame_Out" + str(frame_number).zfill(4) + ".png", shell = True)
@@ -80,27 +112,8 @@ def AIA_DecimateIndex(LIST, SKIP):
 
 	return(list_out)
 
-#Creates a list of all videos in the directory, sorted alphanumerically
-def Video_List():
-	videolist = []
-	for f in sorted(glob.glob("*.mp4")):
-		videolist.append(str(f))
-
-	return videolist
-
-#This builds and returns a database of fits files in a given directory.
-def Fits_Index(DIR):
-	fits_list = []
-	count = 0
-	for fits_file in sorted(glob.glob(DIR + "/*.fits")):
-		print("\r Adding file: " + str(fits_file) + " Entries: " + str(count), end = " ")
-		fits_list.append(str(fits_file))
-		count = count + 1
-	print(fits_list) 
-	return(fits_list)
-
 #This purges the working directory of .png files
-def Clean_Frames():
+def Purge_Media():
 	for f in glob.glob("working/*.png"):
 	    os.remove(f)
 
@@ -188,7 +201,7 @@ def AIA_MakeFrames(FILE):
 		print("Entry header contains no date. Skipping...")
 	
 #	
-def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
+def AIA_GenerateBackground(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
 
 	im = ImageClip(TEMPLATE) 
 	regions = findObjects(im)
@@ -212,77 +225,54 @@ def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for vide
 
 	cc.set_duration(DURATION).write_videofile(VIDEONAME, fps = 24)
 
-def OverlayComposite(BASE, OVERLAY, OUTNAME): #BASE: Output of VideoBaseGen(), Overlay: the graphical overlay image EG: NASM_Wall_Base2x2.mp4, OVERLAY_2x2.png
+def AIA_AddInfographic(BASE, OVERLAY, OUTNAME): #BASE: Output of AIA_GenerateBackground(), Overlay: the graphical overlay image EG: NASM_Wall_Base2x2.mp4, OVERLAY_2x2.png
 	
 	cap = cv2.VideoCapture(BASE)
 	fg = cv2.imread(OVERLAY,-1)
-	# Read the foreground image with alpha channel
-	foreGroundImage = fg
-	queue = []
 
-	i = 0
+	i = 0;
 
 	while(cap.isOpened()):
-		ret, frame = cap.read()
+	    ret, frame = cap.read()
+	    if ret == True:
 
-		if ret == True:
-			print("adding " + str(i).zfill(4) + " to queue")
-			queue.append(frame)
-			i = i + 1
-		else:
-			break
+	        # Read the foreground image with alpha channel
+	        foreGroundImage = fg
 
-	# print(queue)
+	        # Split png foreground image
+	        b,g,r,a = cv2.split(foreGroundImage)
 
-	def AIA_Infographic(FRAME):
+	        # Save the foregroung RGB content into a single object
+	        foreground = cv2.merge((b,g,r))
 
-		frame = FRAME
-		
-		# print("frame: " + str(frame))
+	        # Save the alpha information into a single Mat
+	        alpha = cv2.merge((a,a,a))
 
-		# Split png foreground image
-		b,g,r,a = cv2.split(foreGroundImage)
+	        foreground = foreground.astype(float)
 
-		# Save the foregroung RGB content into a single object
-		foreground = cv2.merge((b,g,r))
-		print("We're IN: ")
-		# Save the alpha information into a single Mat
-		alpha = cv2.merge((a,a,a))
+	        background = frame
 
-		foreground = foreground.astype(float)
+	        # Convert uint8 to float
+	        background = background.astype(float)
+	        alpha = alpha.astype(float)/255
 
-		background = frame
-		# print("frame: " + str(frame))
-		# print("FRAME: " + str(FRAME))
-		print("BACKGROUND: " + str(background))
+	        # Perform alpha blending
+	        foreground = cv2.multiply(alpha, foreground)
+	        background = cv2.multiply(1.0 - alpha, background)
+	        outImage = cv2.add(foreground, background)
 
-		# Convert uint8 to float
-		background = background.astype(float)
-		alpha = alpha.astype(float)/255
-
-		# Perform alpha blending
-		foreground = cv2.multiply(alpha, foreground)
-		background = cv2.multiply(1.0 - alpha, background)
-		outImage = cv2.add(foreground, background)
-
-		# write the processed frame
-		# out.write(outImage)
-		cv2.imwrite("NASM_out" + str(i) + ".png", outImage)
-		i = i + 1
-
-		print("\rOverlaying frame: " + str(i), end = "")
-		stdout.flush() 
-		# cv2.imshow('frame',outImage)
-		if cv2.waitKey(1) & 0xFF == ord('q'):
-		    return 0
-
-	cap = cv2.VideoCapture(BASE)
-	fg = cv2.imread(OVERLAY,-1)
-
-	pool = Pool()
-	pool.map(AIA_Infographic, queue) #NEEDS A QUEUEUEUE?
-	pool.close()
-	pool.join()
+	        # write the processed frame
+	        # out.write(outImage)
+	        cv2.imwrite("NASM_out" + str(i) + ".png", outImage)
+	        i = i + 1
+	
+	        print("\rOverlaying frame: " + str(i), end = "")
+	        stdout.flush() 
+	        # cv2.imshow('frame',outImage)
+	        if cv2.waitKey(1) & 0xFF == ord('q'):
+	            break
+	    else:
+	        break
 
 	subprocess.call('ffmpeg -r 24 -i NASM_out%01d.png -vcodec libx264 -b:v 4M -pix_fmt yuv420p -y ' + str(OUTNAME), shell=True)
 
@@ -293,31 +283,27 @@ def OverlayComposite(BASE, OVERLAY, OUTNAME): #BASE: Output of VideoBaseGen(), O
 	cap.release()
 
 
-# AIA_Sort(directory)
-
-# for f in glob.glob(str(directory) + "*"):
-# 	if os.path.isdir(f):
-# 		print("Opening directory: " + f)
+for target in target_wavelengths:
 		
-# 		database = Fits_Index(f)
-# 		print("DATABASE")
-# 		print(database)
-# 		database = AIA_DecimateIndex(database, FRAMESKIP)
+		print("Building video of WAVELENGTH: " + str(target))
 
-# 		OUTNAME = Build_Outname(database[0]) #build a filename for our video from header data from a file in our database
+		database = Parse_Directory(target)
+		database = AIA_DecimateIndex(database, skipframes)
 
-# 		pool = Pool()
+		OUTNAME = (str(target) + ".mp4")
 
-# 		# Using multiprocess.pool() to parallelize our frame rendering
-# 		pool.map(AIA_MakeFrames, database)
-# 		pool.close()
-# 		pool.join()
+		pool = Pool()
 
-# 		AIA_ArrangeFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
+		# Using multiprocess.pool() to parallelize our frame rendering
+		pool.map(AIA_MakeFrames, database)
+		pool.close()
+		pool.join()
 
-# 		print("OUTNAME: " + OUTNAME)
-# 		subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-# 		Clean_Frames()
+		AIA_PruneDroppedFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
+
+		print("OUTNAME: " + OUTNAME)
+		subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
+		Purge_Media()
 
 
 # Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, so synchronize temperature data.
@@ -326,36 +312,40 @@ for n in range (0, 6):
 	vlist = AIA_ArrangeByTemp(vlist)
 	feature = vlist[n]
 	templateIn = "misc/TEMPLATE_2x3.png"
-	videoOut = "NASM_BaseSegment_" + str(n) + "_.mp4"
+	videoOut = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
 	
 	print("Video In: " + feature + ", using template: " + templateIn)
 	
-	# VideoBaseGen(templateIn, feature, 2, videoOut)
+	AIA_GenerateBackground(templateIn, feature, 30, videoOut)
 
-	baseVideoIn = "NASM_BaseSegment_" + str(n) + "_.mp4"
-	segmentVideoOut = "NASM_SegmentOverlay_" + str(n) + "_.mp4"
+	baseVideoIn = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
+	segmentVideoOut = "working/NASM_SegmentOverlay_" + str(n) + "_.mp4"
 	# overlayIn = "misc/OVERLAY_2x3_WHITEc.png" 
 	overlayIn = "misc/OVERLAY_2x3_WHITE_" + str(n) + ".png"
-	OverlayComposite(baseVideoIn, overlayIn, segmentVideoOut)
+	AIA_AddInfographic(baseVideoIn, overlayIn, segmentVideoOut)
 
 	subprocess.call('killall ffmpeg', shell = True) #This is a temporary fix for the leaky way that Moviepy calls ffmpeg
 
 # Take all the clips we've generated, and stitch them in to one long video.
-clip1 = VideoFileClip("NASM_SegmentOverlay_0_.mp4")
-clip2 = VideoFileClip("NASM_SegmentOverlay_1_.mp4")
-clip3 = VideoFileClip("NASM_SegmentOverlay_2_.mp4")
-clip4 = VideoFileClip("NASM_SegmentOverlay_3_.mp4")
-clip5 = VideoFileClip("NASM_SegmentOverlay_4_.mp4")
-clip6 = VideoFileClip("NASM_SegmentOverlay_5_.mp4")
+clip1 = VideoFileClip("working/NASM_SegmentOverlay_0_.mp4")
+clip2 = VideoFileClip("working/NASM_SegmentOverlay_1_.mp4")
+clip3 = VideoFileClip("working/NASM_SegmentOverlay_2_.mp4")
+clip4 = VideoFileClip("working/NASM_SegmentOverlay_3_.mp4")
+clip5 = VideoFileClip("working/NASM_SegmentOverlay_4_.mp4")
+clip6 = VideoFileClip("working/NASM_SegmentOverlay_5_.mp4")
 
 # final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
 final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
 final_clip.write_videofile("NASM_VideoWall_Concatenated.mp4")
 
 # Cleanup the directory when we're done
-# for f in glob.glob("NASM_BaseSegment_*.mp4"):
-# 	    os.remove(f)
+for f in glob.glob("NASM_BaseSegment_*.mp4"):
+	    os.remove(f)
 
-# for f in glob.glob("NASM_SegmentOverlay_*.mp4"):
-# 	    os.remove(f)
+for f in glob.glob("NASM_SegmentOverlay_*.mp4"):
+	    os.remove(f)
+
+timeend = datetime.datetime.now()
+finaltime = timeend - timestart
+print("Final Runtime: " + str(finaltime))
 

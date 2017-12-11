@@ -4,9 +4,8 @@ import os
 import datetime
 import sys
 
-
-directory = "/data/SDO/AIA/level1/2017/06/08/"
 wavelength = sys.argv[1]
+directory = sys.argv[2]
 
 def Parse_Directory(WLEN):
 
@@ -21,5 +20,3 @@ def Parse_Directory(WLEN):
         return(fits_list)
 
 new_index = Parse_Directory(wavelength)
-
-print(new_index)
