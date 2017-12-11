@@ -296,9 +296,8 @@ for target in target_wavelengths:
 
 		# Using multiprocess.pool() to parallelize our frame rendering
 		pool.map(AIA_MakeFrames, database)
-		pool.join()
 		pool.close()
-
+		pool.join()
 
 		AIA_PruneDroppedFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
 
