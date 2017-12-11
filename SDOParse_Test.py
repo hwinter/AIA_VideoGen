@@ -4,6 +4,8 @@ import os
 import datetime
 import sys
 
+from astropy.io import fits
+
 wavelength = sys.argv[1]
 directory = sys.argv[2]
 
@@ -20,3 +22,6 @@ def Parse_Directory(WLEN):
         return(fits_list)
 
 new_index = Parse_Directory(wavelength)
+
+hdulist = fits.open(new_index[1])
+
