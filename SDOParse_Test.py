@@ -10,15 +10,17 @@ wavelength = sys.argv[1]
 
 def Parse_Directory(WLEN):
 
-	fits_list = []
+        fits_list = []
 
-	for folder in sorted(glob.glob(str(directory) + "H*")):
-		for file in sorted(glob.glob("*" + str(WLEN).zfill(4) + ".fits")):
-			fits_list.append(str(file))
+        for folder in sorted(glob.glob(str(directory) + "H*")):
+		print("FOLDER: " + str(folder))
+                for file in sorted(glob.glob(str(folder) + "/*" + str(WLEN).zfill(4) + ".fits")):
+                        print("ADDING: " + str(file))
+                        fits_list.append(str(file))
 
-	return(fits_list)
+        return(fits_list)
 
 new_index = Parse_Directory(wavelength)
 
-for i in len(new_index):
-	print(new_index[i])
+for i in new_index:
+        print(new_index[i])
