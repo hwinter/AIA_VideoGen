@@ -31,6 +31,8 @@ font = ImageFont.truetype(fontpath, 76)
 database = []
 target_wavelengths = ["0094", "0171", "0193", "0211", "0304", "0335"]
 
+segment_length = 0
+
 if len(sys.argv) == 3:
 	directory = sys.argv[1]
 	skipframes = int(sys.argv[2])
@@ -55,15 +57,23 @@ def Fits_Index(DIR):
 #Exactly the same as Fits_Index, but modified to work with the file structure of /data/SDO
 def Parse_Directory(WLEN):
 
-		fits_list = []
+	fits_list = []
 
-		for folder in sorted(glob.glob(str(directory) + "H*")):
-			print("FOLDER: " + str(folder))
-			for file in sorted(glob.glob(str(folder) + "/*" + str(WLEN).zfill(4) + ".fits")):
-					print("ADDING: " + str(file))
-					fits_list.append(str(file))
+	for folder in sorted(glob.glob(str(directory) + "H*")):
+		print("FOLDER: " + str(folder))
+		for file in sorted(glob.glob(str(folder) + "/*" + str(WLEN).zfill(4) + ".fits")):
+				print("ADDING: " + str(file))
+				fits_list.append(str(file))
 
-		return(fits_list)
+	return(fits_list)
+
+#This let's us pick and choose which frames to render from our index. Feed it in a list, and this will spit out a list of every <SKIP> index.
+def AIA_DecimateIndex(LIST, SKIP):
+	list_in = LIST
+	print("DECIMATING")
+	list_out = [list_in[i] for i in xrange(0, len(list_in), SKIP)]
+
+	return(list_out)
 
 #Sorts AIA fits files in to new directories by spectrum
 def AIA_Sort(DIR):
@@ -103,14 +113,6 @@ def AIA_PruneDroppedFrames(DIR):
 		subprocess.call("mv " + f + " working/" + "Frame_Out" + str(frame_number).zfill(4) + ".png", shell = True)
 		print("SORTING: " + str(f))
 		frame_number = frame_number + 1
-
-#This let's us pick and choose which frames to render from our index. Feed it in a list, and this will spit out a list of every <SKIP> index.
-def AIA_DecimateIndex(LIST, SKIP):
-	list_in = LIST
-	print("DECIMATING")
-	list_out = [list_in[i] for i in xrange(0, len(list_in), SKIP)]
-
-	return(list_out)
 
 #This purges the working directory of .png files
 def Purge_Media():
@@ -290,6 +292,8 @@ for target in target_wavelengths:
 		database = Parse_Directory(target)
 		database = AIA_DecimateIndex(database, skipframes)
 
+		segment_length = (len(database) / 24) #the number of frames in the database divided by 24 frames per second (our video framerate) to give us the length in seconds for each segment 
+
 		OUTNAME = (str(target) + ".mp4")
 
 		pool = Pool()
@@ -316,7 +320,7 @@ for n in range (0, 6):
 	
 	print("Video In: " + feature + ", using template: " + templateIn)
 	
-	AIA_GenerateBackground(templateIn, feature, 30, videoOut)
+	AIA_GenerateBackground(templateIn, feature, segment_length, videoOut)
 
 	baseVideoIn = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
 	segmentVideoOut = "working/NASM_SegmentOverlay_" + str(n) + "_.mp4"
