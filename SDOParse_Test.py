@@ -23,9 +23,9 @@ def Parse_Directory(WLEN):
 
 	for folder in sorted(glob.glob(str(directory) + "H*")):
 		print("FOLDER: " + str(folder))
-			for file in sorted(glob.glob(str(folder) + "/*" + str(WLEN).zfill(4) + ".fits")):
-					print("ADDING: " + str(file))
-					fits_list.append(str(file))
+		for file in sorted(glob.glob(str(folder) + "/*" + str(WLEN).zfill(4) + ".fits")):
+				print("ADDING: " + str(file))
+				fits_list.append(str(file))
 	print("TOTAL SIZE: " + str(len(fits_list)))
 	return(fits_list)
 
