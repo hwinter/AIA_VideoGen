@@ -319,6 +319,7 @@ for n in range (0, 6):
 	videoOut = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
 	
 	print("Video In: " + feature + ", using template: " + templateIn)
+	print("Segment Length: " + str(segment_length))
 	
 	AIA_GenerateBackground(templateIn, feature, segment_length, videoOut)
 
