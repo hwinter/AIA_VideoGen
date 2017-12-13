@@ -29,16 +29,51 @@ fontpath = "BebasNeue Regular.otf"
 font = ImageFont.truetype(fontpath, 76)
 
 database = []
+target_wavelengths = ["0094", "0171", "0193", "0211", "0304", "0335"]
+
+segment_length = 0
 
 if len(sys.argv) == 3:
 	directory = sys.argv[1]
 	skipframes = int(sys.argv[2])
 else:
 	print("This script takes exactly two arguments. Proceeding with default values. ")
-	directory = "test_fits_files/set1/"
+	directory = "/data/SDO/AIA/level1/2017/06/08/"
 	skipframes = 24
 
 print("Dataset: " + str(directory))
+
+#This builds and returns a database of fits files in a given directory.
+def Fits_Index(DIR):
+	fits_list = []
+	count = 0
+	for fits_file in sorted(glob.glob(DIR + "/*.fits")):
+		print("\r Adding file: " + str(fits_file) + " Entries: " + str(count), end = " ")
+		fits_list.append(str(fits_file))
+		count = count + 1
+	print(fits_list) 
+	return(fits_list)
+
+#Exactly the same as Fits_Index, but modified to work with the file structure of /data/SDO
+def Parse_Directory(WLEN):
+
+	fits_list = []
+
+	for folder in sorted(glob.glob(str(directory) + "H*")):
+		print("FOLDER: " + str(folder))
+		for file in sorted(glob.glob(str(folder) + "/*" + str(WLEN).zfill(4) + ".fits")):
+				print("ADDING: " + str(file))
+				fits_list.append(str(file))
+
+	return(fits_list)
+
+#This let's us pick and choose which frames to render from our index. Feed it in a list, and this will spit out a list of every <SKIP> index.
+def AIA_DecimateIndex(LIST, SKIP):
+	list_in = LIST
+	print("DECIMATING")
+	list_out = [list_in[i] for i in xrange(0, len(list_in), SKIP)]
+
+	return(list_out)
 
 #Sorts AIA fits files in to new directories by spectrum
 def AIA_Sort(DIR):
@@ -54,6 +89,14 @@ def AIA_Sort(DIR):
 	print("sorted: " + str(newdirs))
 	return(newdirs)
 
+#Creates a list of all videos in the directory, sorted alphanumerically
+def Video_List():
+	videolist = []
+	for f in sorted(glob.glob("*.mp4")):
+		videolist.append(str(f))
+
+	return videolist
+
 #This is a hack to sort the output of Video_List() by temperature, rather than spectrum
 def AIA_ArrangeByTemp(LIST):
 	list_in = LIST
@@ -64,42 +107,15 @@ def AIA_ArrangeByTemp(LIST):
 	return(list_out)
 
 #This smooths out frame numbering in the event that individual frames failed to render properly
-def AIA_ArrangeFrames(DIR):  
+def AIA_PruneDroppedFrames(DIR):  
 	frame_number = 0
 	for f in sorted(glob.glob(str(DIR) + "Frame_Out*.png")):
 		subprocess.call("mv " + f + " working/" + "Frame_Out" + str(frame_number).zfill(4) + ".png", shell = True)
 		print("SORTING: " + str(f))
 		frame_number = frame_number + 1
 
-#This let's us pick and choose which frames to render from our index. Feed it in a list, and this will spit out a list of every <SKIP> index.
-def AIA_DecimateIndex(LIST, SKIP):
-	list_in = LIST
-	print("DECIMATING")
-	list_out = [list_in[i] for i in xrange(0, len(list_in), SKIP)]
-
-	return(list_out)
-
-#Creates a list of all videos in the directory, sorted alphanumerically
-def Video_List():
-	videolist = []
-	for f in sorted(glob.glob("*.mp4")):
-		videolist.append(str(f))
-
-	return videolist
-
-#This builds and returns a database of fits files in a given directory.
-def Fits_Index(DIR):
-	fits_list = []
-	count = 0
-	for fits_file in sorted(glob.glob(DIR + "/*.fits")):
-		print("\r Adding file: " + str(fits_file) + " Entries: " + str(count), end = " ")
-		fits_list.append(str(fits_file))
-		count = count + 1
-	print(fits_list) 
-	return(fits_list)
-
 #This purges the working directory of .png files
-def Clean_Frames():
+def Purge_Media():
 	for f in glob.glob("working/*.png"):
 	    os.remove(f)
 
@@ -187,7 +203,7 @@ def AIA_MakeFrames(FILE):
 		print("Entry header contains no date. Skipping...")
 	
 #	
-def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
+def AIA_GenerateBackground(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
 
 	im = ImageClip(TEMPLATE) 
 	regions = findObjects(im)
@@ -211,7 +227,7 @@ def VideoBaseGen(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for vide
 
 	cc.set_duration(DURATION).write_videofile(VIDEONAME, fps = 24)
 
-def OverlayComposite(BASE, OVERLAY, OUTNAME): #BASE: Output of VideoBaseGen(), Overlay: the graphical overlay image EG: NASM_Wall_Base2x2.mp4, OVERLAY_2x2.png
+def AIA_AddInfographic(BASE, OVERLAY, OUTNAME): #BASE: Output of AIA_GenerateBackground(), Overlay: the graphical overlay image EG: NASM_Wall_Base2x2.mp4, OVERLAY_2x2.png
 	
 	cap = cv2.VideoCapture(BASE)
 	fg = cv2.imread(OVERLAY,-1)
@@ -269,18 +285,16 @@ def OverlayComposite(BASE, OVERLAY, OUTNAME): #BASE: Output of VideoBaseGen(), O
 	cap.release()
 
 
-AIA_Sort(directory)
-
-for f in glob.glob(str(directory) + "*"):
-	if os.path.isdir(f):
-		print("Opening directory: " + f)
+for target in target_wavelengths:
 		
-		database = Fits_Index(f)
-		print("DATABASE")
-		print(database)
+		print("Building video of WAVELENGTH: " + str(target))
+
+		database = Parse_Directory(target)
 		database = AIA_DecimateIndex(database, skipframes)
 
-		OUTNAME = Build_Outname(database[0]) #build a filename for our video from header data from a file in our database
+		segment_length = (len(database) / 24) #the number of frames in the database divided by 24 frames per second (our video framerate) to give us the length in seconds for each segment 
+
+		OUTNAME = (str(target) + ".mp4")
 
 		pool = Pool()
 
@@ -289,11 +303,11 @@ for f in glob.glob(str(directory) + "*"):
 		pool.close()
 		pool.join()
 
-		AIA_ArrangeFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
+		AIA_PruneDroppedFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
 
 		print("OUTNAME: " + OUTNAME)
 		subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-		Clean_Frames()
+		Purge_Media()
 
 
 # Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, so synchronize temperature data.
@@ -305,14 +319,15 @@ for n in range (0, 6):
 	videoOut = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
 	
 	print("Video In: " + feature + ", using template: " + templateIn)
+	print("Segment Length: " + str(segment_length))
 	
-	VideoBaseGen(templateIn, feature, 30, videoOut)
+	AIA_GenerateBackground(templateIn, feature, segment_length, videoOut)
 
 	baseVideoIn = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
 	segmentVideoOut = "working/NASM_SegmentOverlay_" + str(n) + "_.mp4"
 	# overlayIn = "misc/OVERLAY_2x3_WHITEc.png" 
 	overlayIn = "misc/OVERLAY_2x3_WHITE_" + str(n) + ".png"
-	OverlayComposite(baseVideoIn, overlayIn, segmentVideoOut)
+	AIA_AddInfographic(baseVideoIn, overlayIn, segmentVideoOut)
 
 	subprocess.call('killall ffmpeg', shell = True) #This is a temporary fix for the leaky way that Moviepy calls ffmpeg
 
