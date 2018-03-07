@@ -26,7 +26,7 @@ import sys
 timestart = datetime.datetime.now()
 
 fontpath = "BebasNeue Regular.otf"
-font = ImageFont.truetype(fontpath, 76)
+font = ImageFont.truetype(fontpath, 19)
 
 database = []
 target_wavelengths = ["0094", "0171", "0193", "0211", "0304", "0335"]
@@ -175,7 +175,7 @@ def AIA_MakeFrames(FILE):
 		date = date_obs.split("T")[0]
 		time = date_obs.split("T")[1]
 
-		img = mm.aia_mkimage(entry, w0 = 4096, h0 = 4096, time_stamp = False)
+		img = mm.aia_mkimage(entry, w0 = 1024, h0 = 1024, time_stamp = False)
 		outfi = mm.aia_mkimage.format_img(img)
 
 		subprocess.call("mv " + outfi + " working/" + str(framenum) + ".png", shell = True)
@@ -190,8 +190,8 @@ def AIA_MakeFrames(FILE):
 			draw = ImageDraw.Draw(img_pil)
 			# 	# #Put our text on it
 			print("applying timestamp... " + str(date_obs))
-			draw.text((3468, 386), str(date), font = font, fill = (b, g, r, a))
-			draw.text((3468, 456), str(time), font = font, fill = (b, g, r, a))
+			draw.text((870, 97), str(date), font = font, fill = (b, g, r, a))
+			draw.text((870, 179), str(time), font = font, fill = (b, g, r, a))
 			# 	# #Turn it back in to a numpy array for OpenCV to deal with
 			frameStamp = np.array(img_pil)
 
