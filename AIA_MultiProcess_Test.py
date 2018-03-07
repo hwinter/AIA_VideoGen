@@ -174,7 +174,7 @@ def AIA_MakeFrames(FILE):
 
 		date = date_obs.split("T")[0]
 		time = date_obs.split("T")[1]
-
+		print("TEST: WE HAVE DATE TIME")
 		img = mm.aia_mkimage(entry, w0 = 1024, h0 = 1024, time_stamp = False, synoptic = True)
 		print("IMG PROCESSED: " + str(img))
 		outfi = mm.aia_mkimage.format_img(img)
