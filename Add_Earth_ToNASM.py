@@ -25,7 +25,7 @@ main_vid = [VideoFileClip("NASM_06-06-17.mp4")]
 mainvideo_length = main_vid[0].duration
 print("MAIN LENGTH: ", str(mainvideo_length))
 
-mlength = mainvideo_length
+mlength = 40
 
 earth_g = VideoFileClip("misc/Earth_Whitebox_TBG.gif", has_mask = True, fps_source = "fps") #It's important to specify the FPS source here because otherwise Moviepy for some reason assumes it's not 24 fps, which skews our speed calculations later on.
 
@@ -37,7 +37,7 @@ print("SPEEDMULT: ", str(speedmult))
 
 # earth_g = earth_g.set_duration(earthvideo_length).fl_time(lambda t: speedmult*t).set_pos((0.7, 0.7), relative = True).resize(lambda t : 1-0.01*t)
 # earth_g = earth_g.set_duration(earthvideo_length).fl_time(lambda t: speedmult*t).set_position(lambda t: (0.85-t*0.1, 0.85-t*0.1), relative = True).resize(0.071)
-earth_g = earth_g.set_duration(earthvideo_length).fl_time(lambda t: speedmult*t).set_pos((0.7, 0.7), relative = True).resize(0.0671) # to account for the downsized resolution of our template video
+earth_g = earth_g.set_duration(earthvideo_length).fl_time(lambda t: speedmult*t).set_pos((0.8, 0.8), relative = True).resize(0.0671) # to account for the downsized resolution of our template video
 
 
 #The above statement is the meat and potatos of this script.
@@ -49,4 +49,4 @@ earth_g = earth_g.set_duration(earthvideo_length).fl_time(lambda t: speedmult*t)
 main_vid.extend( [earth_g] )
 outvideo2 = CompositeVideoClip(main_vid)
 
-outvideo2.set_duration(10).write_videofile("Test.mp4", fps = 24, threads = 8)
+outvideo2.set_duration(40).write_videofile("Test.mp4", fps = 24, threads = 8)

@@ -43,7 +43,7 @@ else:
 
 print("Dataset: " + str(directory))
 
-#This builds and returns a database of fits files in a given directory.
+#build and return a database of fits files in a given directory.
 def Fits_Index(DIR):
 	fits_list = []
 	count = 0
@@ -67,7 +67,7 @@ def Parse_Directory(WLEN):
 
 	return(fits_list)
 
-#This let's us pick and choose which frames to render from our index. Feed it in a list, and this will spit out a list of every <SKIP> index.
+#This lets us pick and choose which frames to render from our index. Feed it in a list, and this will spit out a list of every <SKIP> index.
 def AIA_DecimateIndex(LIST, SKIP):
 	list_in = LIST
 	print("DECIMATING")
@@ -75,7 +75,7 @@ def AIA_DecimateIndex(LIST, SKIP):
 
 	return(list_out)
 
-#Sorts AIA fits files in to new directories by spectrum
+#Sort AIA fits files in to new directories by spectrum. 
 def AIA_Sort(DIR):
 	newdirs = []
 	for f in glob.glob(DIR + "*.fits"):
@@ -89,7 +89,7 @@ def AIA_Sort(DIR):
 	print("sorted: " + str(newdirs))
 	return(newdirs)
 
-#Creates a list of all videos in the directory, sorted alphanumerically
+#Create a list of all videos in the directory, sorted alphanumerically
 def Video_List():
 	videolist = []
 	for f in sorted(glob.glob("*.mp4")):
@@ -106,7 +106,7 @@ def AIA_ArrangeByTemp(LIST):
 
 	return(list_out)
 
-#This smooths out frame numbering in the event that individual frames failed to render properly
+#smooth out frame numbering in the event that individual frames failed to render properly
 def AIA_PruneDroppedFrames(DIR):  
 	frame_number = 0
 	for f in sorted(glob.glob(str(DIR) + "Frame_Out*.png")):
@@ -114,7 +114,7 @@ def AIA_PruneDroppedFrames(DIR):
 		print("SORTING: " + str(f))
 		frame_number = frame_number + 1
 
-#This purges the working directory of .png files
+#purge the working directory of .png files
 def Purge_Media():
 	for f in glob.glob("working/*.png"):
 	    os.remove(f)
@@ -155,7 +155,7 @@ def AIA_MakeFrames(FILE):
 	entry = FILE 
 
 
-	# img = aia.aiaprep(img)
+	# img = aia.aiaprep(img)       #leaving this here because it might be useful, but right now we're working with pre-prepped images.
 	print("working on " + str(entry))
 
 	if os.stat(entry).st_size != 0: #Check to see if our fits file is empty (this apparently happens sometimes)
@@ -177,7 +177,7 @@ def AIA_MakeFrames(FILE):
 
 		img = mm.aia_mkimage(entry, w0 = 4096, h0 = 4096, time_stamp = False)
 		outfi = mm.aia_mkimage.format_img(img)
-		# for f in glob.glob("working/" + wavelength + "*.png"):
+
 		subprocess.call("mv " + outfi + " working/" + str(framenum) + ".png", shell = True)
 
 		# 	#Convert our image from a numpy array to something PIL can deal with
@@ -196,7 +196,7 @@ def AIA_MakeFrames(FILE):
 			frameStamp = np.array(img_pil)
 
 			print("printing frame: " + str(framenum))
-			cv2.imwrite("working/Frame_Out" + str(framenum) + ".png", cv2.cvtColor(frameStamp, cv2.COLOR_RGB2BGR))
+			cv2.imwrite("working/Frame_Out" + str(framenum) + ".png", cv2.cvtColor(frameStamp, cv2.COLOR_RGB2BGR)) #It's critical to convert from BGR to RGB here, because OpenCV sees things differently from everyone else
 		else:
 			print("Could not locate working/" + str(framenum) + ".png. Dropping frame")
 	else:
@@ -264,13 +264,13 @@ def AIA_AddInfographic(BASE, OVERLAY, OUTNAME): #BASE: Output of AIA_GenerateBac
 	        outImage = cv2.add(foreground, background)
 
 	        # write the processed frame
-	        # out.write(outImage)
+
 	        cv2.imwrite("NASM_out" + str(i) + ".png", outImage)
 	        i = i + 1
 	
 	        print("\rOverlaying frame: " + str(i), end = "")
 	        stdout.flush() 
-	        # cv2.imshow('frame',outImage)
+
 	        if cv2.waitKey(1) & 0xFF == ord('q'):
 	            break
 	    else:
@@ -310,7 +310,7 @@ for target in target_wavelengths:
 		Purge_Media()
 
 
-# Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, so synchronize temperature data.
+# Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, to synchronize temperature data.
 for n in range (0, 6):
 	vlist = Video_List()
 	vlist = AIA_ArrangeByTemp(vlist)
@@ -325,7 +325,6 @@ for n in range (0, 6):
 
 	baseVideoIn = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
 	segmentVideoOut = "working/NASM_SegmentOverlay_" + str(n) + "_.mp4"
-	# overlayIn = "misc/OVERLAY_2x3_WHITEc.png" 
 	overlayIn = "misc/OVERLAY_2x3_WHITE_" + str(n) + ".png"
 	AIA_AddInfographic(baseVideoIn, overlayIn, segmentVideoOut)
 
