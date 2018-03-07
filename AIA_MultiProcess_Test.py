@@ -175,7 +175,7 @@ def AIA_MakeFrames(FILE):
 		date = date_obs.split("T")[0]
 		time = date_obs.split("T")[1]
 
-		img = mm.aia_mkimage(entry, w0 = 1024, h0 = 1024, time_stamp = False)
+		img = mm.aia_mkimage(entry, w0 = 1024, h0 = 1024, time_stamp = False, synoptic = True)
 		outfi = mm.aia_mkimage.format_img(img)
 
 		subprocess.call("mv " + outfi + " working/" + str(framenum) + ".png", shell = True)
