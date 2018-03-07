@@ -148,6 +148,7 @@ class aia_mkimage:
         #if just a string turn the file string into a list
         elif isinstance(dayarray,str):
             self.dayarray = [dayarray]
+            print("TEST: mkimage got this far!")
         else:
             sys.stdout.write('dayarray must be a list or string')
             sys.exit(1)
