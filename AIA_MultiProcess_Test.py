@@ -192,7 +192,7 @@ def AIA_MakeFrames(FILE):
 			# 	# #Put our text on it
 			print("applying timestamp... " + str(date_obs))
 			draw.text((870, 97), str(date), font = font, fill = (b, g, r, a))
-			draw.text((870, 179), str(time), font = font, fill = (b, g, r, a))
+			draw.text((870, 119), str(time), font = font, fill = (b, g, r, a))
 			# 	# #Turn it back in to a numpy array for OpenCV to deal with
 			frameStamp = np.array(img_pil)
 

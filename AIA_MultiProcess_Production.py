@@ -160,7 +160,7 @@ def AIA_MakeFrames(FILE):
 
 	if os.stat(entry).st_size != 0: #Check to see if our fits file is empty (this apparently happens sometimes)
 		hdulist = fits.open(entry)
-		priheader = hdulist[1].header
+		priheader = hdulist[1].header #This is looking at the second header of older fits files from AIA, which have two. The newer Synoptic files seem to have just 1.
 		date_obs = priheader['DATE-OBS']
 		wavelength = priheader['WAVELNTH']
 
