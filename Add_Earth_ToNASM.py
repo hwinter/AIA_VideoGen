@@ -21,15 +21,15 @@ import sys
 #NOTE: iter_frames(fps=None, with_times=False, progress_bar=False, dtype=None) <- returns all the frames of the video as H W N numpy arrays
 
 
-main_vid = [VideoFileClip("NASM_06-06-17.mp4")]
-mainvideo_length = main_vid[0].duration
+main_video = [VideoFileClip("0171.mp4")]
+mainvideo_length = main_video[0].duration
 print("MAIN LENGTH: ", str(mainvideo_length))
 
-mlength = 40
+mlength = mainvideo_length
 
 earth_g = VideoFileClip("misc/Earth_Whitebox_TBG.gif", has_mask = True, fps_source = "fps") #It's important to specify the FPS source here because otherwise Moviepy for some reason assumes it's not 24 fps, which skews our speed calculations later on.
 
-earthvideo_length = 60 #I'm having a problem with Moviepy (go figure) skipping to what seems to be an arbitrary frame at the very end of the video, rather than looping seemlessly. It also does not accurately measure the duration of the gif.
+earthvideo_length = earth_g.duration #I'm having a problem with Moviepy (go figure) skipping to what seems to be an arbitrary frame at the very end of the video, rather than looping seemlessly. It also does not accurately measure the duration of the gif.
 print("EARTH LENGTH: ", str(earthvideo_length))
 
 speedmult = (earthvideo_length / mainvideo_length) #our Earth gif completes a full rotation in 60 seconds (to be completely accurate, it's 59.97. framerates). Here we're figuring out how much slower or faster the video needs to be to align our Earth rotation speed with the speed of our timelapse.
@@ -46,7 +46,7 @@ earth_g = earth_g.set_duration(earthvideo_length).fl_time(lambda t: speedmult*t)
 #resize() resizes our Earth gif by a percentage, in this case derived by Earth's diameter in pixels (407 in our Whiteboxed example) divided by the sun's (3178 at native AIA resolution). 
 #set_position() and resize() both accept lambda t: values, so our Earth gif can be resized and moved dynamically.
 
-main_vid.extend( [earth_g] )
-outvideo2 = CompositeVideoClip(main_vid)
+main_video.extend( [earth_g] )
+out_video = CompositeVideoClip(main_video)
 
-outvideo2.set_duration(40).write_videofile("Test.mp4", fps = 24, threads = 8)
+out_video.set_duration(mlength).write_videofile("Test.mp4", fps = 24, threads = 8)
