@@ -34,6 +34,7 @@ target_wavelengths = ["0094", "0171", "0193", "0211", "0304", "0335"]
 segment_length = 0
 
 global_date = datetime.datetime.now()
+global_date = str(global_date)
 year = global_date.split("-")[0]
 month = global_date.split("-")[1]
 day = int(global_date.split("-")[2].split(" ")[0]) - 1
