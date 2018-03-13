@@ -45,7 +45,7 @@ if len(sys.argv) == 3:
 	skipframes = int(sys.argv[2])
 else:
 	print("This script takes exactly two arguments. Proceeding with default values. ")
-	directory = "/data/SDO/AIA/synoptic/" + str(year) + "/" + str(month) +"/" + str(day - 1) + "/"
+	directory = "/data/SDO/AIA/synoptic/" + str(year) + "/" + str(month) +"/" + str(day) + "/"
 	skipframes = 2
 
 print("Dataset: " + str(directory))
