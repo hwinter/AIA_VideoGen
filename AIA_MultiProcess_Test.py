@@ -378,7 +378,7 @@ clip4 = VideoFileClip("working/NASM_SegmentOverlay_3_.mp4")
 clip5 = VideoFileClip("working/NASM_SegmentOverlay_4_.mp4")
 clip6 = VideoFileClip("working/NASM_SegmentOverlay_5_.mp4")
 
-final_outname = str(global_date) + "_NASM_VideoWall_Concatenated.mp4"
+final_outname = str(year) + "_" + str(month) + "_" + str(day) + "_NASM_VideoWall_Concatenated.mp4"
 
 # final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
 final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
