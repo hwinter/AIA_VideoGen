@@ -382,10 +382,10 @@ final_outname = str(year) + "_" + str(month) + "_" + str(day) + "_NASM_VideoWall
 
 # final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
 final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
-final_clip.write_videofile(final_outname)
+final_clip.write_videofile("~/daily_mov/" + str(final_outname))
 
-os.rename(final_outname, "~/daily_mov/" + str(final_outname))
-os.remove(final_outname)
+# os.rename(final_outname, "~/daily_mov/" + str(final_outname))
+# os.remove(final_outname)
 # Cleanup the directory when we're done
 for f in glob.glob("NASM_BaseSegment_*.mp4"):
 	    os.remove(f)
