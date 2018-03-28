@@ -25,7 +25,7 @@ import sys
 
 timestart = datetime.datetime.now()
 
-fontpath = "BebasNeue Regular.otf"
+fontpath = os.path.dirname(os.path.abspath("BebasNeue Regular.otf"))
 font = ImageFont.truetype(fontpath, 19)
 
 database = []
