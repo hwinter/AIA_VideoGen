@@ -240,7 +240,7 @@ def Add_Earth(FILE):
 	main_video.extend( [earth_g] )
 	out_video = CompositeVideoClip(main_video)
 
-	out_video.set_duration(mlength).write_videofile("o_" + str(FILE), fps = 24, threads = 8)
+	out_video.set_duration(mlength).write_videofile("o_" + str(FILE), fps = 24, threads = 4, audio = False, progress_bar = False)
 	os.rename("o_" + str(FILE),FILE)
 
 	
@@ -266,7 +266,7 @@ def AIA_GenerateBackground(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The templat
 
 	cc = CompositeVideoClip(comp_clips,im.size)
 
-	cc.set_duration(DURATION).write_videofile(VIDEONAME, fps = 24)
+	cc.set_duration(DURATION).write_videofile(VIDEONAME, fps = 24, threads = 4, audio = False, progress_bar = False)
 
 def AIA_AddInfographic(BASE, OVERLAY, OUTNAME): #BASE: Output of AIA_GenerateBackground(), Overlay: the graphical overlay image EG: NASM_Wall_Base2x2.mp4, OVERLAY_2x2.png
 	
@@ -384,7 +384,7 @@ final_outname = str(year) + "_" + str(month) + "_" + str(day) + "_NASM_VideoWall
 
 # final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
 final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
-final_clip.write_videofile("daily_mov/" + str(final_outname))
+final_clip.write_videofile("daily_mov/" + str(final_outname), fps = 24, threads = 4, audio = False, progress_bar = False)
 
 # os.rename(final_outname, "~/daily_mov/" + str(final_outname))
 # os.remove(final_outname)
