@@ -155,7 +155,7 @@ def AIA_MakeFrames(FILE):
 	time = 0
 	wavelength = 0
 
-	b,g,r,a = 191,191,191,0
+	b,g,r,a = 223,199,0,0
 	framenum = database.index(FILE)
 	framenum = str(framenum).zfill(4)
 
@@ -380,7 +380,7 @@ clip4 = VideoFileClip("working/NASM_SegmentOverlay_3_.mp4")
 clip5 = VideoFileClip("working/NASM_SegmentOverlay_4_.mp4")
 clip6 = VideoFileClip("working/NASM_SegmentOverlay_5_.mp4")
 
-final_outname = str(year) + "_" + str(month) + "_" + str(day) + "_NASM_VideoWall_Concatenated.mp4"
+final_outname = str(year) + "_" + str(month) + "_" + str(day) + "_FROST_VideoWall_Concatenated.mp4"
 
 # final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
 final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
