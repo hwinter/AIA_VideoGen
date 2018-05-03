@@ -155,7 +155,7 @@ def AIA_MakeFrames(FILE):
 	time = 0
 	wavelength = 0
 
-	b,g,r,a = 223,199,0,0
+	b,g,r,a = 0,199,223,0
 	framenum = database.index(FILE)
 	framenum = str(framenum).zfill(4)
 
