@@ -214,7 +214,7 @@ class download_files:
         Downloads the requested data from class object using drms (i.e. JSOC).
         """
         import drms
-        client = drms.Client(email=self.email,verbose=False)
+        client = drms.Client(email=self.email,verbose=True)
         fmt = '%Y.%m.%d_%H:%M'
         self.t_qstr = self.series+'[{0}_TAI-{1}_TAI@{2}]'.format(self.start.strftime(fmt),self.end.strftime(fmt),self.cadence) 
 

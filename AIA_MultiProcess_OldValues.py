@@ -26,28 +26,20 @@ import sys
 timestart = datetime.datetime.now()
 
 fontpath = "BebasNeue Regular.otf"
-
-font = ImageFont.truetype(fontpath, 19)
+font = ImageFont.truetype(fontpath, 76)
 
 database = []
 target_wavelengths = ["0094", "0171", "0193", "0211", "0304", "0335"]
 
 segment_length = 0
 
-global_date = datetime.datetime.now()
-global_date = str(global_date)
-year = global_date.split("-")[0]
-month = global_date.split("-")[1]
-day = str(int(global_date.split("-")[2].split(" ")[0]) - 1).zfill(2)
-
-
 if len(sys.argv) == 3:
 	directory = sys.argv[1]
 	skipframes = int(sys.argv[2])
 else:
 	print("This script takes exactly two arguments. Proceeding with default values. ")
-	directory = "/data/SDO/AIA/synoptic/" + str(year) + "/" + str(month) +"/" + str(day) + "/"
-	skipframes = 2
+	directory = "/data/SDO/AIA/level1/2017/06/08/"
+	skipframes = 24
 
 print("Dataset: " + str(directory))
 
@@ -168,7 +160,7 @@ def AIA_MakeFrames(FILE):
 
 	if os.stat(entry).st_size != 0: #Check to see if our fits file is empty (this apparently happens sometimes)
 		hdulist = fits.open(entry)
-		priheader = hdulist[0].header #Changed to 0 for newer synoptic files. 1 for older level1 fits files.
+		priheader = hdulist[1].header #This is looking at the second header of older fits files from AIA, which have two. The newer Synoptic files seem to have just 1.
 		date_obs = priheader['DATE-OBS']
 		wavelength = priheader['WAVELNTH']
 
@@ -179,10 +171,11 @@ def AIA_MakeFrames(FILE):
 		
 	if date_obs != 0:
 
+
 		date = date_obs.split("T")[0]
-		global_date = date
 		time = date_obs.split("T")[1]
-		img = mm.aia_mkimage(entry, w0 = 1024, h0 = 1024, time_stamp = False, synoptic = True)
+
+		img = mm.aia_mkimage(entry, w0 = 4096, h0 = 4096, time_stamp = False)
 		outfi = mm.aia_mkimage.format_img(img)
 
 		subprocess.call("mv " + outfi + " working/" + str(framenum) + ".png", shell = True)
@@ -197,9 +190,8 @@ def AIA_MakeFrames(FILE):
 			draw = ImageDraw.Draw(img_pil)
 			# 	# #Put our text on it
 			print("applying timestamp... " + str(date_obs))
-			draw.text((870, 97), str(date), font = font, fill = (b, g, r, a))
-			draw.text((870, 119), str(time), font = font, fill = (b, g, r, a))
-			draw.text((102, 930), "Earth Added for Size Scale", font = ImageFont.truetype(fontpath, 15), fill = (b, g, r, a))
+			draw.text((3468, 386), str(date), font = font, fill = (b, g, r, a))
+			draw.text((3468, 456), str(time), font = font, fill = (b, g, r, a))
 			# 	# #Turn it back in to a numpy array for OpenCV to deal with
 			frameStamp = np.array(img_pil)
 
@@ -210,40 +202,7 @@ def AIA_MakeFrames(FILE):
 	else:
 		print("Entry header contains no date. Skipping...")
 	
-def Add_Earth(FILE):
-	print("ADDING EARTH TO: " + str(FILE))
-	main_video = [VideoFileClip(FILE)]
-	mainvideo_length = main_video[0].duration
-	print("MAIN LENGTH: ", str(mainvideo_length))
-
-	mlength = mainvideo_length
-
-	earth_g = VideoFileClip("misc/Earth_Whitebox_TBG.gif", has_mask = True, fps_source = "fps") #It's important to specify the FPS source here because otherwise Moviepy for some reason assumes it's not 24 fps, which skews our speed calculations later on.
-
-	earthvideo_length = 60 #I'm having a problem with Moviepy (go figure) skipping to what seems to be an arbitrary frame at the very end of the video, rather than looping seemlessly. It also does not accurately measure the duration of the gif.
-	print("EARTH LENGTH: ", str(earthvideo_length))
-
-	speedmult = (earthvideo_length / mainvideo_length) #our Earth gif completes a full rotation in 60 seconds (to be completely accurate, it's 59.97. framerates). Here we're figuring out how much slower or faster the video needs to be to align our Earth rotation speed with the speed of our timelapse.
-	print("SPEEDMULT: ", str(speedmult))
-
-	# earth_g = earth_g.set_duration(earthvideo_length).fl_time(lambda t: speedmult*t).set_pos((0.7, 0.7), relative = True).resize(lambda t : 1-0.01*t)
-	# earth_g = earth_g.set_duration(earthvideo_length).fl_time(lambda t: speedmult*t).set_position(lambda t: (0.85-t*0.1, 0.85-t*0.1), relative = True).resize(0.071)
-	earth_g = earth_g.set_duration(earthvideo_length).fl_time(lambda t: speedmult*t).set_pos((0.1, 0.88), relative = True).resize(0.0293) # to account for the downsized resolution of our template video. Current Earth size = 320 pixels
-
-
-	#The above statement is the meat and potatos of this script.
-	#SPEED: We use fl_time to match the rotational speed of earth to our timelapse. where t = realtime speed of the video, we multiply t by the ratio of our Earth gif's length (1 min) to our main video length, assuming that our main video is a 24 hour timelapse of varying speed.
-	#SET POSITION: We use set_position() to position the Earth, using relative percentages of overall screen size. EG: 0.85, 0.85 means 85% of the way across the screen along the x and y axes.
-	#RESIZE: resize() resizes our Earth gif by a percentage, in this case derived by Earth's diameter in pixels (407 in our Whiteboxed example) divided by the sun's (3178 at native AIA resolution). 
-	#set_position() and resize() both accept lambda t: values, so our Earth gif can be resized and moved dynamically.
-
-	main_video.extend( [earth_g] )
-	out_video = CompositeVideoClip(main_video)
-
-	out_video.set_duration(mlength).write_videofile("o_" + str(FILE), fps = 24, threads = 4, audio = False, progress_bar = False)
-	os.rename("o_" + str(FILE),FILE)
-
-	
+#	
 def AIA_GenerateBackground(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
 
 	im = ImageClip(TEMPLATE) 
@@ -266,7 +225,7 @@ def AIA_GenerateBackground(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The templat
 
 	cc = CompositeVideoClip(comp_clips,im.size)
 
-	cc.set_duration(DURATION).write_videofile(VIDEONAME, fps = 24, threads = 4, audio = False, progress_bar = False)
+	cc.set_duration(DURATION).write_videofile(VIDEONAME, fps = 24)
 
 def AIA_AddInfographic(BASE, OVERLAY, OUTNAME): #BASE: Output of AIA_GenerateBackground(), Overlay: the graphical overlay image EG: NASM_Wall_Base2x2.mp4, OVERLAY_2x2.png
 	
@@ -348,8 +307,7 @@ for target in target_wavelengths:
 
 		print("OUTNAME: " + OUTNAME)
 		subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-		Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
-		Purge_Media() #erases all the individually generated frames after our movie is produced
+		Purge_Media()
 
 
 # Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, to synchronize temperature data.
@@ -380,14 +338,10 @@ clip4 = VideoFileClip("working/NASM_SegmentOverlay_3_.mp4")
 clip5 = VideoFileClip("working/NASM_SegmentOverlay_4_.mp4")
 clip6 = VideoFileClip("working/NASM_SegmentOverlay_5_.mp4")
 
-final_outname = str(year) + "_" + str(month) + "_" + str(day) + "_NASM_VideoWall_Concatenated.mp4"
-
 # final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
 final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
-final_clip.write_videofile("daily_mov/" + str(final_outname), fps = 24, threads = 4, audio = False, progress_bar = False)
+final_clip.write_videofile("NASM_VideoWall_Concatenated.mp4")
 
-# os.rename(final_outname, "~/daily_mov/" + str(final_outname))
-# os.remove(final_outname)
 # Cleanup the directory when we're done
 for f in glob.glob("NASM_BaseSegment_*.mp4"):
 	    os.remove(f)
