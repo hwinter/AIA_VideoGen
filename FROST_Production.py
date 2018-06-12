@@ -351,6 +351,24 @@ for target in target_wavelengths:
 		Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
 		Purge_Media() #erases all the individually generated frames after our movie is produced
 
+def Compile_Final_Video(DAILY):
+	im = ImageClip("misc/FROST_TEMPLATE.png") 
+	regions = findObjects(im)
+
+	clips = [VideoFileClip(n) for n in
+		["misc/sidebar/solar_rain.mp4",
+		"misc/test/2.mp4",
+		"misc/sidebar/1700.mp4",
+		DAILY, #path to our feature video
+		]]
+
+	clips[1] = ImageClip("ContentBody.png") 
+
+	comp_clips = [c.resize(r.size).set_mask(r.mask).set_pos(r.screenpos) for c,r in zip(clips,regions)] #We build our composite here.
+	cc = CompositeVideoClip(comp_clips,im.size)
+
+	cc.set_duration(DAILY.duration).write_videofile(str(DAILY) + "_", fps = 24, threads = 4, audio = False)
+	os.rename(str(DAILY) + "_", DAILY)
 
 # Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, to synchronize temperature data.
 for n in range (0, 6):
@@ -385,6 +403,8 @@ final_outname = str(year) + "_" + str(month) + "_" + str(day) + "_FROST_VideoWal
 # final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
 final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
 final_clip.write_videofile("daily_mov/" + str(final_outname), fps = 24, threads = 4, audio = False, progress_bar = False)
+
+Compile_Final_Video("daily_mov/" + str(final_outname))
 
 # os.rename(final_outname, "~/daily_mov/" + str(final_outname))
 # os.remove(final_outname)
