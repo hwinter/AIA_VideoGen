@@ -341,7 +341,7 @@ def Compile_Final_Video(DAILY):
 	comp_clips = [c.resize(r.size).set_mask(r.mask).set_pos(r.screenpos) for c,r in zip(clips,regions)] #We build our composite here.
 	cc = CompositeVideoClip(comp_clips,im.size)
 
-	cc.set_duration(DAILY.duration).write_videofile(str(DAILY) + "_", fps = 24, threads = 4, audio = False)
+	cc.set_duration(clips[3].duration).write_videofile(str(DAILY) + "_", fps = 24, threads = 4, audio = False)
 	os.rename(str(DAILY) + "_", DAILY)
 
 
