@@ -23,6 +23,8 @@ import os
 import datetime
 import sys
 
+import SendText
+
 timestart = datetime.datetime.now()
 
 fontpath = "ReplicaFrostStencil-Regular.otf"
@@ -346,79 +348,85 @@ def Compile_Final_Video(DAILY):
 
 
 if __name__ == '__main__':
-		
-	for target in target_wavelengths:
+	try:	
+		for target in target_wavelengths:
+				
+				print("Building video of WAVELENGTH: " + str(target))
+
+				database = Parse_Directory(target)
+				database = AIA_DecimateIndex(database, skipframes)
+
+				segment_length = (len(database) / 24) #the number of frames in the database divided by 24 frames per second (our video framerate) to give us the length in seconds for each segment 
+
+				OUTNAME = (str(target) + ".mp4")
+
+				pool = Pool()
+
+				# Using multiprocess.pool() to parallelize our frame rendering
+				pool.map(AIA_MakeFrames, database)
+				pool.close()
+				pool.join()
+
+				AIA_PruneDroppedFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
+
+				print("OUTNAME: " + OUTNAME)
+				subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
+				Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
+				Purge_Media() #erases all the individually generated frames after our movie is produced
+
+
+		# Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, to synchronize temperature data.
+		for n in range (0, 6):
+			vlist = Video_List()
+			vlist = AIA_ArrangeByTemp(vlist)
+			feature = vlist[n]
+			templateIn = "misc/TEMPLATE_2x3.png"
+			videoOut = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
 			
-			print("Building video of WAVELENGTH: " + str(target))
+			print("Video In: " + feature + ", using template: " + templateIn)
+			print("Segment Length: " + str(segment_length))
+			
+			AIA_GenerateBackground(templateIn, feature, segment_length, videoOut)
 
-			database = Parse_Directory(target)
-			database = AIA_DecimateIndex(database, skipframes)
+			baseVideoIn = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
+			segmentVideoOut = "working/NASM_SegmentOverlay_" + str(n) + "_.mp4"
+			overlayIn = "misc/OVERLAY_2x3_FROST_" + str(n) + ".png"
+			AIA_AddInfographic(baseVideoIn, overlayIn, segmentVideoOut)
 
-			segment_length = (len(database) / 24) #the number of frames in the database divided by 24 frames per second (our video framerate) to give us the length in seconds for each segment 
+			subprocess.call('killall ffmpeg', shell = True) #This is a temporary fix for the leaky way that Moviepy calls ffmpeg
 
-			OUTNAME = (str(target) + ".mp4")
+		# Take all the clips we've generated, and stitch them in to one long video.
+		clip1 = VideoFileClip("working/NASM_SegmentOverlay_0_.mp4")
+		clip2 = VideoFileClip("working/NASM_SegmentOverlay_1_.mp4")
+		clip3 = VideoFileClip("working/NASM_SegmentOverlay_2_.mp4")
+		clip4 = VideoFileClip("working/NASM_SegmentOverlay_3_.mp4")
+		clip5 = VideoFileClip("working/NASM_SegmentOverlay_4_.mp4")
+		clip6 = VideoFileClip("working/NASM_SegmentOverlay_5_.mp4")
 
-			pool = Pool()
+		final_outname = str(year) + "_" + str(month) + "_" + str(day) + "_FROST_VideoWall_Concatenated.mp4"
 
-			# Using multiprocess.pool() to parallelize our frame rendering
-			pool.map(AIA_MakeFrames, database)
-			pool.close()
-			pool.join()
+		# final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
+		final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
+		final_clip.write_videofile("daily_mov/" + str(final_outname), fps = 24, threads = 4, audio = False, progress_bar = False)
 
-			AIA_PruneDroppedFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
+		Compile_Final_Video("daily_mov/" + str(final_outname))
 
-			print("OUTNAME: " + OUTNAME)
-			subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-			Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
-			Purge_Media() #erases all the individually generated frames after our movie is produced
+		# os.rename(final_outname, "~/daily_mov/" + str(final_outname))
+		# os.remove(final_outname)
+		# Cleanup the directory when we're done
+		for f in glob.glob("NASM_BaseSegment_*.mp4"):
+			    os.remove(f)
 
+		for f in glob.glob("NASM_SegmentOverlay_*.mp4"):
+				os.remove(f)
 
-	# Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, to synchronize temperature data.
-	for n in range (0, 6):
-		vlist = Video_List()
-		vlist = AIA_ArrangeByTemp(vlist)
-		feature = vlist[n]
-		templateIn = "misc/TEMPLATE_2x3.png"
-		videoOut = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
-		
-		print("Video In: " + feature + ", using template: " + templateIn)
-		print("Segment Length: " + str(segment_length))
-		
-		AIA_GenerateBackground(templateIn, feature, segment_length, videoOut)
+		timeend = datetime.datetime.now()
+		finaltime = timeend - timestart
+		print("Final Runtime: " + str(finaltime))
+		SendText.Send_Text(str(final_outname) + " render complete! It took: " + str(finaltime))
 
-		baseVideoIn = "working/NASM_BaseSegment_" + str(n) + "_.mp4"
-		segmentVideoOut = "working/NASM_SegmentOverlay_" + str(n) + "_.mp4"
-		overlayIn = "misc/OVERLAY_2x3_FROST_" + str(n) + ".png"
-		AIA_AddInfographic(baseVideoIn, overlayIn, segmentVideoOut)
-
-		subprocess.call('killall ffmpeg', shell = True) #This is a temporary fix for the leaky way that Moviepy calls ffmpeg
-
-	# Take all the clips we've generated, and stitch them in to one long video.
-	clip1 = VideoFileClip("working/NASM_SegmentOverlay_0_.mp4")
-	clip2 = VideoFileClip("working/NASM_SegmentOverlay_1_.mp4")
-	clip3 = VideoFileClip("working/NASM_SegmentOverlay_2_.mp4")
-	clip4 = VideoFileClip("working/NASM_SegmentOverlay_3_.mp4")
-	clip5 = VideoFileClip("working/NASM_SegmentOverlay_4_.mp4")
-	clip6 = VideoFileClip("working/NASM_SegmentOverlay_5_.mp4")
-
-	final_outname = str(year) + "_" + str(month) + "_" + str(day) + "_FROST_VideoWall_Concatenated.mp4"
-
-	# final_clip = concatenate_videoclips([clip6,clip5,clip4,clip3,clip2,clip1])
-	final_clip = concatenate_videoclips([clip6, clip5.crossfadein(1), clip4.crossfadein(1), clip3.crossfadein(1), clip2.crossfadein(1), clip1.crossfadein(1)], padding = -1, method = "compose")
-	final_clip.write_videofile("daily_mov/" + str(final_outname), fps = 24, threads = 4, audio = False, progress_bar = False)
-
-	Compile_Final_Video("daily_mov/" + str(final_outname))
-
-	# os.rename(final_outname, "~/daily_mov/" + str(final_outname))
-	# os.remove(final_outname)
-	# Cleanup the directory when we're done
-	for f in glob.glob("NASM_BaseSegment_*.mp4"):
-		    os.remove(f)
-
-	for f in glob.glob("NASM_SegmentOverlay_*.mp4"):
-			os.remove(f)
-
-	timeend = datetime.datetime.now()
-	finaltime = timeend - timestart
-	print("Final Runtime: " + str(finaltime))
+	except:
+		outname = str(year) + "_" + str(month) + "_" + str(day) + "_FROST_VideoWall_Concatenated.mp4"
+		e = sys.exc_info()[0]
+		SendText.Send_Text("ERROR: failed to render custom video: " + str(outname) + "\n \n" + str(e))
 
