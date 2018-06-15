@@ -427,6 +427,6 @@ if __name__ == '__main__':
 
 	except:
 		outname = str(year) + "_" + str(month) + "_" + str(day) + "_FROST_VideoWall_Concatenated.mp4"
-		e = sys.exc_info()[0]
+		e = sys.exc_info()[0] + "\n" + sys.exc_info()[2]
 		SendText.Send_Text("ERROR: failed to render custom video: " + str(outname) + "\n \n" + str(e))
 
