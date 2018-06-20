@@ -339,8 +339,8 @@ def Compile_Final_Video(DAILY):
 		]]
 
 	clips[1] = ImageClip("misc/sidebar/ContentBody.png")
-	clips[0] = ImageClip("misc/sidebar/ChandraCraftSolarWall.png") 
-	
+	clips[0] = ImageClip("misc/sidebar/SDO_Spacecraft.png") 
+
 	comp_clips = [c.resize(r.size).set_mask(r.mask).set_pos(r.screenpos) for c,r in zip(clips,regions)] #We build our composite here.
 	cc = CompositeVideoClip(comp_clips,im.size)
 
