@@ -49,7 +49,7 @@ if len(sys.argv) == 3:
 else:
 	print("This script takes exactly two arguments. Proceeding with default values. ")
 	directory = "/data/SDO/AIA/synoptic/" + str(year) + "/" + str(month) +"/" + str(day) + "/"
-	skipframes = 2
+	skipframes = 1 #number of frames to skip, AKA timelapse factor
 
 print("Dataset: " + str(directory))
 
