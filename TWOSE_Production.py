@@ -381,7 +381,7 @@ if __name__ == '__main__':
 		clips[clips.index(f)] = f.subclip((clips.index(f) * seg_len),((clips.index(f) * seg_len) + seg_len))
 
 
-	final_clip = final_clip = concatenate_videoclips([clips[0], clips[1].crossfadein(1), clips[2].crossfadein(1), clips[3].crossfadein(1), clips[4].crossfadein(1), clips[5].crossfadein(1)], padding = -1, method = "compose")
+	final_clip = final_clip = concatenate_videoclips([clips[5], clips[4].crossfadein(1), clips[3].crossfadein(1), clips[2].crossfadein(1), clips[1].crossfadein(1), clips[0].crossfadein(1)], padding = -1, method = "compose")
 	final_clip.write_videofile("working/TWOSE_TEST.mp4", fps = 24)
 	subprocess.call('ffmpeg -i ' + "working/TWOSE_TEST.mp4" + ' -vf "scale=(iw*sar)*min(3840/(iw*sar)\,2160/ih):ih*min(3840/(iw*sar)\,2160/ih), pad=3840:2160:(3840-iw*min(3840/iw\,2160/ih))/2:(2160-ih*min(2160/iw\,2160/ih))/2"  -y ' + "working/TWOSE_TEST_CONVERTED.mp4", shell = True)
 
