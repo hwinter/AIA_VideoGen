@@ -332,65 +332,65 @@ def AIA_AddInfographic(BASE, OVERLAY, OUTNAME): #BASE: Output of AIA_GenerateBac
 
 
 if __name__ == '__main__':
-	try:
-		for target in target_wavelengths:
-				
-				print("Building video of WAVELENGTH: " + str(target))
-
-				database = Parse_Directory(target)
-				database = AIA_DecimateIndex(database, skipframes)
-
-				segment_length = (len(database) / 24) #the number of frames in the database divided by 24 frames per second (our video framerate) to give us the length in seconds for each segment 
-
-				OUTNAME = "working/wav_vids/" + (str(target) + ".mp4")
-
-				pool = Pool()
-
-				# Using multiprocess.pool() to parallelize our frame rendering
-				pool.map(AIA_MakeFrames, database)
-				pool.close()
-				pool.join()
-
-				AIA_PruneDroppedFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
-
-				print("OUTNAME: " + OUTNAME)
-				subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-				Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
-				Purge_Media() #erases all the individually generated frames after our movie is produced
-
-
-		# Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, to synchronize temperature data.
-
-		vlist = Video_List()
-		vlist = AIA_ArrangeByTemp(vlist)
-	
-		seg_len = 0
+	# try:
+	for target in target_wavelengths:
 			
-		for f in vlist:
-			clip = VideoFileClip(f)
-			print(f, "DURATION: ", clip.duration)
-			clips.append(clip)
+			print("Building video of WAVELENGTH: " + str(target))
+
+			database = Parse_Directory(target)
+			database = AIA_DecimateIndex(database, skipframes)
+
+			segment_length = (len(database) / 24) #the number of frames in the database divided by 24 frames per second (our video framerate) to give us the length in seconds for each segment 
+
+			OUTNAME = "working/wav_vids/" + (str(target) + ".mp4")
+
+			pool = Pool()
+
+			# Using multiprocess.pool() to parallelize our frame rendering
+			pool.map(AIA_MakeFrames, database)
+			pool.close()
+			pool.join()
+
+			AIA_PruneDroppedFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
+
+			print("OUTNAME: " + OUTNAME)
+			subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
+			Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
+			Purge_Media() #erases all the individually generated frames after our movie is produced
+
+
+	# Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, to synchronize temperature data.
+
+	vlist = Video_List()
+	vlist = AIA_ArrangeByTemp(vlist)
+
+	seg_len = 0
 		
-		print("CLIPS: ", clips)
-		seg_len = clips[0].duration / len(clips)
-
-		for f in clips:
+	for f in vlist:
+		clip = VideoFileClip(f)
+		print(f, "DURATION: ", clip.duration)
+		clips.append(clip)
 	
-			print("CLIP: ", f, "SEG LEN: ", seg_len, "TIMES: ", str(clips.index(f) * seg_len), " - ", str((clips.index(f) * seg_len) + seg_len))
-			clips[clips.index(f)] = f.subclip((clips.index(f) * seg_len),((clips.index(f) * seg_len) + seg_len))
+	print("CLIPS: ", clips)
+	seg_len = clips[0].duration / len(clips)
 
-	
-		final_clip = final_clip = concatenate_videoclips([clips[0], clips[1].crossfadein(1), clips[2].crossfadein(1)], padding = -1, method = "compose")
-		final_clip.write_videofile("working/TWOSE_TEST.mp4", fps = 24)
-		subprocess.call('ffmpeg -i ' + "working/TWOSE_TEST.mp4" + ' -vf "scale=(iw*sar)*min(3840/(iw*sar)\,2160/ih):ih*min(3840/(iw*sar)\,2160/ih), pad=3840:2160:(3840-iw*min(3840/iw\,2160/ih))/2:(2160-ih*min(2160/iw\,2160/ih))/2"  -y ' + "working/TWOSE_TEST_CONVERTED.mp4", shell = True)
+	for f in clips:
+
+		print("CLIP: ", f, "SEG LEN: ", seg_len, "TIMES: ", str(clips.index(f) * seg_len), " - ", str((clips.index(f) * seg_len) + seg_len))
+		clips[clips.index(f)] = f.subclip((clips.index(f) * seg_len),((clips.index(f) * seg_len) + seg_len))
 
 
-		timeend = datetime.datetime.now()
-		finaltime = timeend - timestart
-		print("Final Runtime: " + str(finaltime))
-		SendText.Send_Text(str(final_outname) + " render complete! It took: " + str(finaltime))
+	final_clip = final_clip = concatenate_videoclips([clips[0], clips[1].crossfadein(1), clips[2].crossfadein(1)], padding = -1, method = "compose")
+	final_clip.write_videofile("working/TWOSE_TEST.mp4", fps = 24)
+	subprocess.call('ffmpeg -i ' + "working/TWOSE_TEST.mp4" + ' -vf "scale=(iw*sar)*min(3840/(iw*sar)\,2160/ih):ih*min(3840/(iw*sar)\,2160/ih), pad=3840:2160:(3840-iw*min(3840/iw\,2160/ih))/2:(2160-ih*min(2160/iw\,2160/ih))/2"  -y ' + "working/TWOSE_TEST_CONVERTED.mp4", shell = True)
 
-	except:
-		outname = str(year) + "_" + str(month) + "_" + str(day) + "_TWOSE_VideoWall_Concatenated.mp4"
-		e = sys.exc_info()[0]
-		SendText.Send_Text("ERROR: failed to render custom video: " + str(outname) + "\n \n" + str(e))
+
+	timeend = datetime.datetime.now()
+	finaltime = timeend - timestart
+	print("Final Runtime: " + str(finaltime))
+	SendText.Send_Text(str(final_outname) + " render complete! It took: " + str(finaltime))
+
+	# except:
+	# 	outname = str(year) + "_" + str(month) + "_" + str(day) + "_TWOSE_VideoWall_Concatenated.mp4"
+	# 	e = sys.exc_info()[0]
+	# 	SendText.Send_Text("ERROR: failed to render custom video: " + str(outname) + "\n \n" + str(e))
