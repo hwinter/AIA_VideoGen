@@ -333,30 +333,30 @@ def AIA_AddInfographic(BASE, OVERLAY, OUTNAME): #BASE: Output of AIA_GenerateBac
 
 if __name__ == '__main__':
 	# try:
-	# for target in target_wavelengths:
+	for target in target_wavelengths:
 			
-	# 		print("Building video of WAVELENGTH: " + str(target))
+			print("Building video of WAVELENGTH: " + str(target))
 
-	# 		database = Parse_Directory(target)
-	# 		database = AIA_DecimateIndex(database, skipframes)
+			database = Parse_Directory(target)
+			database = AIA_DecimateIndex(database, skipframes)
 
-	# 		segment_length = (len(database) / 24) #the number of frames in the database divided by 24 frames per second (our video framerate) to give us the length in seconds for each segment 
+			segment_length = (len(database) / 24) #the number of frames in the database divided by 24 frames per second (our video framerate) to give us the length in seconds for each segment 
 
-	# 		OUTNAME = "working/wav_vids/" + (str(target) + ".mp4")
+			OUTNAME = "working/wav_vids/" + (str(target) + ".mp4")
 
-	# 		pool = Pool()
+			pool = Pool()
 
-	# 		# Using multiprocess.pool() to parallelize our frame rendering
-	# 		pool.map(AIA_MakeFrames, database)
-	# 		pool.close()
-	# 		pool.join()
+			# Using multiprocess.pool() to parallelize our frame rendering
+			pool.map(AIA_MakeFrames, database)
+			pool.close()
+			pool.join()
 
-	# 		AIA_PruneDroppedFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
+			AIA_PruneDroppedFrames("working/") #Sometimes frames get dropped. Since their names are based on the database index, this can cause ffmpeg to trip over itself when it expects rigidly sequenced numbering.
 
-	# 		print("OUTNAME: " + OUTNAME)
-	# 		subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-	# 		Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
-	# 		Purge_Media() #erases all the individually generated frames after our movie is produced
+			print("OUTNAME: " + OUTNAME)
+			subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
+			Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
+			Purge_Media() #erases all the individually generated frames after our movie is produced
 
 
 	# Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, to synchronize temperature data.
