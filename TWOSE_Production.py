@@ -50,7 +50,7 @@ if len(sys.argv) == 3:
 else:
 	print("This script takes exactly two arguments. Proceeding with default values. ")
 	directory = "/data/SDO/AIA/synoptic/" + str(year) + "/" + str(month) +"/" + str(day) + "/"
-	skipframes = 2
+	skipframes = 4
 
 print("Dataset: " + str(directory))
 
@@ -246,7 +246,7 @@ def Add_Earth(FILE):
 	main_video.extend( [earth_g] )
 	out_video = CompositeVideoClip(main_video)
 
-	out_video.set_duration(mlength).write_videofile(str(FILE) + "_.mp4", fps = 24, threads = 4, audio = False, progress_bar = False)
+	out_video.set_duration(mlength).write_videofile(str(FILE) + "_.mp4", fps = 24, threads = 4, audio = False)
 	os.rename(str(FILE) + "_.mp4",FILE)
 	
 def AIA_GenerateBackground(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
@@ -364,6 +364,7 @@ if __name__ == '__main__':
 	vlist = Video_List()
 	vlist = AIA_ArrangeByTemp(vlist)
 
+	clips = []
 	seg_len = 0
 		
 	for f in vlist:
