@@ -246,8 +246,8 @@ def Add_Earth(FILE):
 	main_video.extend( [earth_g] )
 	out_video = CompositeVideoClip(main_video)
 
-	out_video.set_duration(mlength).write_videofile("o_" + str(FILE), fps = 24, threads = 4, audio = False, progress_bar = False)
-	os.rename("o_" + str(FILE),FILE)
+	out_video.set_duration(mlength).write_videofile(str(FILE) + "_.mp4", fps = 24, threads = 4, audio = False, progress_bar = False)
+	os.rename(str(FILE) + "_.mp4",FILE)
 	
 def AIA_GenerateBackground(TEMPLATE, FEATURE, DURATION, VIDEONAME): #The template for video arrangement, EG: TEMPLATE_2x2.png
 
