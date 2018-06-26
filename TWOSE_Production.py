@@ -201,7 +201,7 @@ def AIA_MakeFrames(FILE):
 			# 	# #Put our text on it
 			print("Annotating: " + str(FILE))
 			draw.text((64, 75), "Temperature: ", font = font, fill = (b, g, r, a))
-			draw.text((64, 97), temperatures_celsius[target_wavelengths.index(wavelength)], font = font, fill = (b, g, r, a))
+			draw.text((64, 97), temperatures_celsius[target_wavelengths.index(wavelength.zfill(4))], font = font, fill = (b, g, r, a))
 			draw.text((870, 75), "Observation Time:", font = font, fill = (b, g, r, a))
 			draw.text((870, 97), str(date), font = font, fill = (b, g, r, a))
 			draw.text((870, 119), str(time), font = font, fill = (b, g, r, a))
