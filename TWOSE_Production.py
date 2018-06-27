@@ -383,8 +383,8 @@ if __name__ == '__main__':
 	final_outname = str(year) + "_" + str(month) + "_" + str(day) + "_TWOSE_VideoWall_Concatenated.mp4"
 	final_clip = concatenate_videoclips([clips[0], clips[1].crossfadein(1), clips[2].crossfadein(1), clips[3].crossfadein(1), clips[4].crossfadein(1), clips[5].crossfadein(1)], padding = -1, method = "compose")
 	final_clip.write_videofile("daily_mov/" + str(final_outname), fps = 24, threads = 4, audio = False, progress_bar = True)
-	subprocess.call('ffmpeg -i ' + "working/TWOSE_TEST.mp4" + ' -vf "scale=(iw*sar)*min(3840/(iw*sar)\,2160/ih):ih*min(3840/(iw*sar)\,2160/ih), pad=3840:2160:(3840-iw*min(3840/iw\,2160/ih))/2:(2160-ih*min(2160/iw\,2160/ih))/2"  -y ' + "working/TWOSE_TEST_CONVERTED.mp4", shell = True)
-
+	subprocess.call('ffmpeg -i ' + "working/TWOSE_TEST.mp4" + ' -vf "scale=(iw*sar)*min(3840/(iw*sar)\,2160/ih):ih*min(3840/(iw*sar)\,2160/ih), pad=3840:2160:(3840-iw*min(3840/iw\,2160/ih))/2:(2160-ih*min(2160/iw\,2160/ih))/2"  -y ' + final_outname + "_.mp4", shell = True)
+	os.rename(final_outname + "_.mp4", final_outname)
 
 	timeend = datetime.datetime.now()
 	finaltime = timeend - timestart
