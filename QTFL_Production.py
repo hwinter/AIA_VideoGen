@@ -33,7 +33,7 @@ font = ImageFont.truetype(fontpath, 19)
 
 database = []
 target_wavelengths = ["0094", "0171", "0193", "0211", "0304", "0335"]
-temperatures_celsius = ["5,999,727 degrees Celsius", "999,727 degrees Celsius", "1,199,727 degrees Celsius", "1,999,727 degrees Celsius", "99,727 degrees Celsius", "2,499,727 degrees Celsius"]
+temperatures_celsius = ["10,800,000 degrees Fahrenheit", "1,800,000 degrees Fahrenheit", "2,200,000 degrees Fahrenheit", "3,600,000 degrees Fahrenheit", "180,000 degrees Fahrenheit", "4,500,000 degrees Fahrenheit"]
 
 segment_length = 0
 
@@ -84,7 +84,7 @@ def AIA_DecimateIndex(LIST, SKIP):
 	print("DECIMATING")
 	list_out = [list_in[i] for i in xrange(0, len(list_in), SKIP)]
 
-	return(list_out)
+	return(list_out)`
 
 #Sort AIA fits files in to new directories by spectrum. 
 def AIA_Sort(DIR):
@@ -111,7 +111,7 @@ def Video_List():
 #This is a hack to sort the output of Video_List() by temperature, rather than spectrum
 def AIA_ArrangeByTemp(LIST):
 	list_in = LIST
-	list_order = [4, 1, 2, 3, 5, 0]
+	list_order = [0, 5, 3 , 2, 1, 4]
 
 	list_out = [list_in[i] for i in list_order]
 
