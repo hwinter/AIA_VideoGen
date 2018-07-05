@@ -84,7 +84,7 @@ def AIA_DecimateIndex(LIST, SKIP):
 	print("DECIMATING")
 	list_out = [list_in[i] for i in xrange(0, len(list_in), SKIP)]
 
-	return(list_out)`
+	return(list_out)
 
 #Sort AIA fits files in to new directories by spectrum. 
 def AIA_Sort(DIR):
