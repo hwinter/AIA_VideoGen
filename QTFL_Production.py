@@ -200,12 +200,12 @@ def AIA_MakeFrames(FILE):
 			draw = ImageDraw.Draw(img_pil)
 			# 	# #Put our text on it
 			print("Annotating: " + str(FILE))
-			draw.text((64, 75), "Temperature: ", font = font, fill = (b, g, r, a))
-			draw.text((64, 97), temperatures_celsius[target_wavelengths.index(str(wavelength).zfill(4))], font = font, fill = (b, g, r, a))
-			draw.text((870, 75), "Observation Time:", font = font, fill = (b, g, r, a))
-			draw.text((870, 97), str(date), font = font, fill = (b, g, r, a))
-			draw.text((870, 119), str(time), font = font, fill = (b, g, r, a))
-			draw.text((102, 930), "Earth Added for Size Scale", font = ImageFont.truetype(fontpath, 15), fill = (b, g, r, a))
+			draw.text((64, 875), "Temperature: ", font = font, fill = (b, g, r, a))
+			draw.text((64, 897), temperatures_celsius[target_wavelengths.index(str(wavelength).zfill(4))], font = font, fill = (b, g, r, a))
+			draw.text((870, 875), "Observation Time:", font = font, fill = (b, g, r, a))
+			draw.text((870, 897), str(date), font = font, fill = (b, g, r, a))
+			draw.text((870, 919), str(time), font = font, fill = (b, g, r, a))
+			# draw.text((102, 930), "Earth Added for Size Scale", font = ImageFont.truetype(fontpath, 15), fill = (b, g, r, a))
 			# 	# #Turn it back in to a numpy array for OpenCV to deal with
 			frameStamp = np.array(img_pil)
 
@@ -355,7 +355,7 @@ if __name__ == '__main__':
 
 			print("OUTNAME: " + OUTNAME)
 			subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-			Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
+			# Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
 			Purge_Media() #erases all the individually generated frames after our movie is produced
 
 
