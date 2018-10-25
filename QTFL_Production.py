@@ -22,13 +22,21 @@ import glob
 import os
 import datetime
 import sys
+import shutil
 
-import SendText
+#import SendText
 
+#Mark when the program started to do a timetest of the code
 timestart = datetime.datetime.now()
+###########################################################
+#Define Global Variables
+wav_movie_dir=''
 
+#End Define Global Variables
+###########################################################
+
+#Define Font
 fontpath = "BebasNeue Regular.otf"
-
 font = ImageFont.truetype(fontpath, 19)
 
 database = []
@@ -37,6 +45,7 @@ temperatures_celsius = ["10,800,000 degrees Fahrenheit", "1,800,000 degrees Fahr
 
 segment_length = 0
 
+#Make a string of the current time in a format the is acceptable 
 global_date = datetime.datetime.now()
 global_date = str(global_date)
 year = global_date.split("-")[0]
@@ -78,7 +87,8 @@ def Parse_Directory(WLEN):
 
 	return(fits_list)
 
-#This lets us pick and choose which frames to render from our index. Feed it in a list, and this will spit out a list of every <SKIP> index.
+#This lets us pick and choose which frames to render from our index. Feed it in a list, 
+#	and this will spit out a list of every <SKIP> index.
 def AIA_DecimateIndex(LIST, SKIP):
 	list_in = LIST
 	print("DECIMATING")
@@ -329,8 +339,8 @@ def AIA_AddInfographic(BASE, OVERLAY, OUTNAME): #BASE: Output of AIA_GenerateBac
 
 	# Release everything if job is finished
 	cap.release()
-
-
+#End definitions
+##########################################################
 if __name__ == '__main__':
 	# try:
 	for target in target_wavelengths:
@@ -340,7 +350,9 @@ if __name__ == '__main__':
 			database = Parse_Directory(target)
 			database = AIA_DecimateIndex(database, skipframes)
 
-			segment_length = (len(database) / 24) #the number of frames in the database divided by 24 frames per second (our video framerate) to give us the length in seconds for each segment 
+			#the number of frames in the database divided by 24 frames per second 
+			#(our video framerate) to give us the length in seconds for each segment 
+			segment_length = (len(database) / 24) 
 
 			OUTNAME = "working/wav_vids/" + (str(target) + ".mp4")
 
@@ -355,11 +367,12 @@ if __name__ == '__main__':
 
 			print("OUTNAME: " + OUTNAME)
 			subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-			# Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
+			Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
 			Purge_Media() #erases all the individually generated frames after our movie is produced
 
 
-	# Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is numerically matched to the base video, to synchronize temperature data.
+	# Generate a base video composite -> add graphical overlay -> Repeat. Each overlay is 
+	# numerically matched to the base video, to synchronize temperature data.
 
 	vlist = Video_List()
 	vlist = AIA_ArrangeByTemp(vlist)
@@ -376,12 +389,13 @@ if __name__ == '__main__':
 	final_clip.write_videofile("daily_mov/" + str(final_outname), fps = 24, threads = 4, audio = False, progress_bar = True)
 	
 	subprocess.call('ffmpeg -i daily_mov/' + final_outname + ' -vf "scale=(iw*sar)*min(1920/(iw*sar)\,1080/ih):ih*min(1920/(iw*sar)\,1080/ih), pad=1920:1080:(1920-iw*min(1920/iw\,1080/ih))/2:(1080-ih*min(1080/iw\,1080/ih))/2"  -y daily_mov/' + final_outname + "_.mp4", shell = True)
-	os.rename("daily_mov/" + final_outname + "_.mp4", final_outname)
+	#os.rename("daily_mov/" + final_outname + "_.mp4", final_outname)
+	shutil.copy2("daily_mov/" + final_outname, "daily_mov/daily_movie.mp4")
 
 	timeend = datetime.datetime.now()
 	finaltime = timeend - timestart
 	print("Final Runtime: " + str(finaltime))
-	SendText.Send_Text(str(final_outname) + " render complete! It took: " + str(finaltime))
+	#SendText.Send_Text(str(final_outname) + " render complete! It took: " + str(finaltime))
 
 	# except:
 	# 	outname = str(year) + "_" + str(month) + "_" + str(day) + "_QTFL_VideoWall_Concatenated.mp4"
