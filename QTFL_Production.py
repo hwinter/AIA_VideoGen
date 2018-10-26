@@ -367,7 +367,7 @@ if __name__ == '__main__':
 
 			print("OUTNAME: " + OUTNAME)
 			subprocess.call('ffmpeg -r 24 -i working/Frame_Out%04d.png -vcodec libx264 -filter "minterpolate=mi_mode=blend" -b:v 4M -pix_fmt yuv420p  -y ' + str(OUTNAME), shell=True)
-			Add_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
+			#YAdd_Earth(OUTNAME) #Overwrites the video we just made with one that has the earth added to scale
 			Purge_Media() #erases all the individually generated frames after our movie is produced
 
 
