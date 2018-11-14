@@ -23,7 +23,7 @@ import os
 import datetime
 import sys
 
-import SendText
+#import SendText
 
 timestart = datetime.datetime.now()
 
@@ -424,10 +424,10 @@ if __name__ == '__main__':
 		timeend = datetime.datetime.now()
 		finaltime = timeend - timestart
 		print("Final Runtime: " + str(finaltime))
-		SendText.Send_Text(str(final_outname) + " render complete! It took: " + str(finaltime))
+#		SendText.Send_Text(str(final_outname) + " render complete! It took: " + str(finaltime))
 
 	except:
 		outname = str(year) + "_" + str(month) + "_" + str(day) + "_FROST_VideoWall_Concatenated.mp4"
 		e = sys.exc_info()[0] + "\n" + sys.exc_info()[2]
-		SendText.Send_Text("ERROR: failed to render custom video: " + str(outname) + "\n \n" + str(e))
+#		SendText.Send_Text("ERROR: failed to render custom video: " + str(outname) + "\n \n" + str(e))
 
